@@ -5,6 +5,7 @@ import express from 'express';
 import { userRouter } from './routes/userRouter';
 import { gameRouter } from "./routes/gameRouter";
 import { questionRouter } from "./routes/questionRouter";
+import { optionRouter } from "./routes/optionRouter";
 
 const app = express();
 app.use(express.json());
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use("/api/v1/users",userRouter);
 app.use("/api/v1/users/games",gameRouter);
 app.use("/api/v1/users/games/questions",questionRouter);
+app.use("/api/v1/users/games/questions/options",optionRouter);
 
 function main(){
   app.listen(3000, () => {
