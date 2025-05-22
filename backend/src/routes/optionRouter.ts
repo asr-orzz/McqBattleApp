@@ -6,7 +6,7 @@ export const optionRouter = Router();
 
 optionRouter.use(userMiddleware);
 
-optionRouter.post("/", async (req, res) => {
+optionRouter.post("/create", async (req, res) => {
   const { option, isCorrect, questionId } = req.body;
 
   try {

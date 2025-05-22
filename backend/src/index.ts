@@ -11,9 +11,9 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/v1/users",userRouter);
-app.use("/api/v1/users/games",gameRouter);
-app.use("/api/v1/users/games/questions",questionRouter);
-app.use("/api/v1/users/games/questions/options",optionRouter);
+app.use("/api/v1/games",gameRouter);
+app.use("/api/v1/questions",questionRouter);
+app.use("/api/v1/options",optionRouter);
 
 function main(){
   app.listen(3000, () => {
