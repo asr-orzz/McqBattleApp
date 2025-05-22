@@ -13,7 +13,7 @@ export const userMiddleware = (req: Request, res: Response, next: NextFunction) 
 
     try {
         const decoded = jwt.verify(token,process.env.USER_JWT_SECRET_KEY!) as { id: string; username: string };
-        req.body.userid = decoded.id; 
+        req.body.userId = decoded.id; 
         next();
     } catch (err) {
         res.status(401).json({ msg: "Invalid or expired token" });
