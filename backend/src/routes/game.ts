@@ -1,9 +1,10 @@
 import { Router } from "express";
 import prisma from "../prisma/client"
+import { userMiddleware } from "../middleware/userMiddleware";
 
 export const gameRouter = Router();
 
-gameRouter.get("/", async (req, res) => {
+gameRouter.get("/",userMiddleware, async (req, res) => {
   try {
     const games = await prisma.game.findMany({
       include: {
@@ -21,7 +22,7 @@ gameRouter.get("/", async (req, res) => {
   }
 });
 
-gameRouter.post("/create", async (req, res) => {
+gameRouter.post("/create",userMiddleware, async (req, res) => {
   const { game, userId } = req.body;
 
   if (!game || !userId) {
@@ -42,7 +43,7 @@ gameRouter.post("/create", async (req, res) => {
   }
 });
 
-gameRouter.put("/:id", async (req, res) => {
+gameRouter.put("/:id",userMiddleware, async (req, res) => {
   const { id } = req.params;
   const { game } = req.body;
 
@@ -57,7 +58,7 @@ gameRouter.put("/:id", async (req, res) => {
   }
 });
 
-gameRouter.delete("/:id", async (req, res) => {
+gameRouter.delete("/:id",userMiddleware, async (req, res) => {
   const { id } = req.params;
   try {
     await prisma.game.delete({ where: { id } });
