@@ -2,16 +2,16 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from 'express';
-import { userRouter } from './routes/user';
-import { gameRouter } from "./routes/game";
+import { userRouter } from './routes/userRouter';
+import { gameRouter } from "./routes/gameRouter";
 import { questionRouter } from "./routes/questionRouter";
 
 const app = express();
 app.use(express.json());
 
-app.use("/api/v1/user",userRouter);
-app.use("/api/v1/user/games",gameRouter);
-app.use("/api/v1/user/games/question",questionRouter);
+app.use("/api/v1/users",userRouter);
+app.use("/api/v1/users/games",gameRouter);
+app.use("/api/v1/users/games/questions",questionRouter);
 
 function main(){
   app.listen(3000, () => {
