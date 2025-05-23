@@ -4,7 +4,7 @@ import { userMiddleware } from "../middleware/userMiddleware";
 
 export const gameRouter = Router();
 
-gameRouter.get("/",userMiddleware, async (req, res) => {
+gameRouter.get("/",async (req, res) => {
   try {
     const games = await prisma.game.findMany({
       include: {
