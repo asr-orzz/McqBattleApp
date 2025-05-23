@@ -133,6 +133,14 @@ exports.Prisma.GameScalarFieldEnum = {
   status: 'status'
 };
 
+exports.Prisma.PlayerScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  gameId: 'gameId',
+  joinedAt: 'joinedAt',
+  score: 'score'
+};
+
 exports.Prisma.QuestionScalarFieldEnum = {
   id: 'id',
   question: 'question',
@@ -145,6 +153,15 @@ exports.Prisma.OptionScalarFieldEnum = {
   option: 'option',
   isCorrect: 'isCorrect',
   questionId: 'questionId'
+};
+
+exports.Prisma.UserAnswerScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  gameId: 'gameId',
+  questionId: 'questionId',
+  optionId: 'optionId',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -165,8 +182,10 @@ exports.GameStatus = exports.$Enums.GameStatus = {
 exports.Prisma.ModelName = {
   User: 'User',
   Game: 'Game',
+  Player: 'Player',
   Question: 'Question',
-  Option: 'Option'
+  Option: 'Option',
+  UserAnswer: 'UserAnswer'
 };
 
 /**

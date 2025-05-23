@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
   output   = "./prisma/generated/prisma"
@@ -13,35 +12,71 @@ model User {
   id        String   @id @default(uuid())
   username  String   @unique
   password  String
+
   games     Game[]   @relation("CreatorGames") 
-  playing   Game[]   @relation("PlayerGames") 
+  players   Player[] 
+  answers   UserAnswer[]
 }
 
 model Game {
-  id         String      @id @default(uuid())
+  id         String     @id @default(uuid())
   game       String
   userId     String
-  user       User        @relation("CreatorGames", fields: [userId], references: [id])
-  players    User[]      @relation("PlayerGames")
+  user       User       @relation("CreatorGames", fields: [userId], references: [id])
+
+  players    Player[]
   questions  Question[]
-  status     GameStatus  @default(WAITING)
+  answers    UserAnswer[]
+
+  status     GameStatus @default(WAITING)
+}
+
+model Player {
+  id        String   @id @default(uuid())
+  userId    String
+  gameId    String
+  joinedAt  DateTime @default(now())
+  score     Int      @default(0)
+
+  user      User     @relation(fields: [userId], references: [id])
+  game      Game     @relation(fields: [gameId], references: [id])
+
+  @@unique([userId, gameId]) 
 }
 
 model Question {
-  id          String    @id @default(uuid())
+  id          String      @id @default(uuid())
   question    String
   explanation String
   gameId      String
-  game        Game      @relation(fields: [gameId], references: [id])
+  game        Game        @relation(fields: [gameId], references: [id])
+
   options     Option[]
+  answers     UserAnswer[]
 }
 
 model Option {
-  id         String    @id @default(uuid())
+  id         String      @id @default(uuid())
   option     String
   isCorrect  Boolean
   questionId String
+  question   Question    @relation(fields: [questionId], references: [id])
+
+  answers    UserAnswer[]
+}
+
+model UserAnswer {
+  id         String    @id @default(uuid())
+  userId     String
+  gameId     String
+  questionId String
+  optionId   String
+  createdAt  DateTime  @default(now())
+
+  user       User      @relation(fields: [userId], references: [id])
+  game       Game      @relation(fields: [gameId], references: [id])
   question   Question  @relation(fields: [questionId], references: [id])
+  option     Option    @relation(fields: [optionId], references: [id])
 }
 
 enum GameStatus {
