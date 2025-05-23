@@ -129,7 +129,8 @@ exports.Prisma.UserScalarFieldEnum = {
 exports.Prisma.GameScalarFieldEnum = {
   id: 'id',
   game: 'game',
-  userId: 'userId'
+  userId: 'userId',
+  status: 'status'
 };
 
 exports.Prisma.QuestionScalarFieldEnum = {
@@ -155,7 +156,11 @@ exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 };
-
+exports.GameStatus = exports.$Enums.GameStatus = {
+  WAITING: 'WAITING',
+  STARTED: 'STARTED',
+  COMPLETED: 'COMPLETED'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',

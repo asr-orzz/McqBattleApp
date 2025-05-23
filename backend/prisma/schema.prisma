@@ -9,35 +9,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id        String     @id @default(uuid())
-  username  String     @unique
+  id        String   @id @default(uuid())
+  username  String   @unique
   password  String
-  games     Game[] 
+  games     Game[]   @relation("CreatorGames") 
+  playing   Game[]   @relation("PlayerGames") 
 }
 
-model Game{
-  id          String    @id @default(uuid())
-  game        String   
-  userId      String    
-  user        User      @relation(fields: [userId], references: [id])
-  questions     Question[] 
+model Game {
+  id         String      @id @default(uuid())
+  game       String
+  userId     String
+  user       User        @relation("CreatorGames", fields: [userId], references: [id])
+  players    User[]      @relation("PlayerGames")
+  questions  Question[]
+  status     GameStatus  @default(WAITING)
 }
 
 model Question {
   id          String    @id @default(uuid())
   question    String
   explanation String
-  gameId  String    
+  gameId      String
   game        Game      @relation(fields: [gameId], references: [id])
-  options     Option[]  
+  options     Option[]
 }
 
 model Option {
   id         String    @id @default(uuid())
   option     String
   isCorrect  Boolean
-  questionId String    
+  questionId String
   question   Question  @relation(fields: [questionId], references: [id])
+}
+
+enum GameStatus {
+  WAITING
+  STARTED
+  COMPLETED
 }

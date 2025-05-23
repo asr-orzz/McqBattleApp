@@ -35,6 +35,24 @@ export type Question = $Result.DefaultSelection<Prisma.$QuestionPayload>
 export type Option = $Result.DefaultSelection<Prisma.$OptionPayload>
 
 /**
+ * Enums
+ */
+export namespace $Enums {
+  export const GameStatus: {
+  WAITING: 'WAITING',
+  STARTED: 'STARTED',
+  COMPLETED: 'COMPLETED'
+};
+
+export type GameStatus = (typeof GameStatus)[keyof typeof GameStatus]
+
+}
+
+export type GameStatus = $Enums.GameStatus
+
+export const GameStatus: typeof $Enums.GameStatus
+
+/**
  * ##  Prisma Client ʲˢ
  *
  * Type-safe database client for TypeScript & Node.js
@@ -1143,10 +1161,12 @@ export namespace Prisma {
 
   export type UserCountOutputType = {
     games: number
+    playing: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     games?: boolean | UserCountOutputTypeCountGamesArgs
+    playing?: boolean | UserCountOutputTypeCountPlayingArgs
   }
 
   // Custom InputTypes
@@ -1167,16 +1187,25 @@ export namespace Prisma {
     where?: GameWhereInput
   }
 
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountPlayingArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: GameWhereInput
+  }
+
 
   /**
    * Count Type GameCountOutputType
    */
 
   export type GameCountOutputType = {
+    players: number
     questions: number
   }
 
   export type GameCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    players?: boolean | GameCountOutputTypeCountPlayersArgs
     questions?: boolean | GameCountOutputTypeCountQuestionsArgs
   }
 
@@ -1189,6 +1218,13 @@ export namespace Prisma {
      * Select specific fields to fetch from the GameCountOutputType
      */
     select?: GameCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * GameCountOutputType without action
+   */
+  export type GameCountOutputTypeCountPlayersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
   }
 
   /**
@@ -1383,6 +1419,7 @@ export namespace Prisma {
     username?: boolean
     password?: boolean
     games?: boolean | User$gamesArgs<ExtArgs>
+    playing?: boolean | User$playingArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -1407,6 +1444,7 @@ export namespace Prisma {
   export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     games?: boolean | User$gamesArgs<ExtArgs>
+    playing?: boolean | User$playingArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -1416,6 +1454,7 @@ export namespace Prisma {
     name: "User"
     objects: {
       games: Prisma.$GamePayload<ExtArgs>[]
+      playing: Prisma.$GamePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -1816,6 +1855,7 @@ export namespace Prisma {
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     games<T extends User$gamesArgs<ExtArgs> = {}>(args?: Subset<T, User$gamesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GamePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    playing<T extends User$playingArgs<ExtArgs> = {}>(args?: Subset<T, User$playingArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GamePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2260,6 +2300,30 @@ export namespace Prisma {
   }
 
   /**
+   * User.playing
+   */
+  export type User$playingArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Game
+     */
+    select?: GameSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Game
+     */
+    omit?: GameOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GameInclude<ExtArgs> | null
+    where?: GameWhereInput
+    orderBy?: GameOrderByWithRelationInput | GameOrderByWithRelationInput[]
+    cursor?: GameWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: GameScalarFieldEnum | GameScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2292,18 +2356,21 @@ export namespace Prisma {
     id: string | null
     game: string | null
     userId: string | null
+    status: $Enums.GameStatus | null
   }
 
   export type GameMaxAggregateOutputType = {
     id: string | null
     game: string | null
     userId: string | null
+    status: $Enums.GameStatus | null
   }
 
   export type GameCountAggregateOutputType = {
     id: number
     game: number
     userId: number
+    status: number
     _all: number
   }
 
@@ -2312,18 +2379,21 @@ export namespace Prisma {
     id?: true
     game?: true
     userId?: true
+    status?: true
   }
 
   export type GameMaxAggregateInputType = {
     id?: true
     game?: true
     userId?: true
+    status?: true
   }
 
   export type GameCountAggregateInputType = {
     id?: true
     game?: true
     userId?: true
+    status?: true
     _all?: true
   }
 
@@ -2403,6 +2473,7 @@ export namespace Prisma {
     id: string
     game: string
     userId: string
+    status: $Enums.GameStatus
     _count: GameCountAggregateOutputType | null
     _min: GameMinAggregateOutputType | null
     _max: GameMaxAggregateOutputType | null
@@ -2426,7 +2497,9 @@ export namespace Prisma {
     id?: boolean
     game?: boolean
     userId?: boolean
+    status?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
+    players?: boolean | Game$playersArgs<ExtArgs>
     questions?: boolean | Game$questionsArgs<ExtArgs>
     _count?: boolean | GameCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["game"]>
@@ -2435,6 +2508,7 @@ export namespace Prisma {
     id?: boolean
     game?: boolean
     userId?: boolean
+    status?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["game"]>
 
@@ -2442,6 +2516,7 @@ export namespace Prisma {
     id?: boolean
     game?: boolean
     userId?: boolean
+    status?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["game"]>
 
@@ -2449,11 +2524,13 @@ export namespace Prisma {
     id?: boolean
     game?: boolean
     userId?: boolean
+    status?: boolean
   }
 
-  export type GameOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "game" | "userId", ExtArgs["result"]["game"]>
+  export type GameOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "game" | "userId" | "status", ExtArgs["result"]["game"]>
   export type GameInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
+    players?: boolean | Game$playersArgs<ExtArgs>
     questions?: boolean | Game$questionsArgs<ExtArgs>
     _count?: boolean | GameCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -2468,12 +2545,14 @@ export namespace Prisma {
     name: "Game"
     objects: {
       user: Prisma.$UserPayload<ExtArgs>
+      players: Prisma.$UserPayload<ExtArgs>[]
       questions: Prisma.$QuestionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       game: string
       userId: string
+      status: $Enums.GameStatus
     }, ExtArgs["result"]["game"]>
     composites: {}
   }
@@ -2869,6 +2948,7 @@ export namespace Prisma {
   export interface Prisma__GameClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    players<T extends Game$playersArgs<ExtArgs> = {}>(args?: Subset<T, Game$playersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     questions<T extends Game$questionsArgs<ExtArgs> = {}>(args?: Subset<T, Game$questionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$QuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -2902,6 +2982,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Game", 'String'>
     readonly game: FieldRef<"Game", 'String'>
     readonly userId: FieldRef<"Game", 'String'>
+    readonly status: FieldRef<"Game", 'GameStatus'>
   }
     
 
@@ -3295,6 +3376,30 @@ export namespace Prisma {
      * Limit how many Games to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Game.players
+   */
+  export type Game$playersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    cursor?: UserWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
@@ -5486,7 +5591,8 @@ export namespace Prisma {
   export const GameScalarFieldEnum: {
     id: 'id',
     game: 'game',
-    userId: 'userId'
+    userId: 'userId',
+    status: 'status'
   };
 
   export type GameScalarFieldEnum = (typeof GameScalarFieldEnum)[keyof typeof GameScalarFieldEnum]
@@ -5548,6 +5654,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'GameStatus'
+   */
+  export type EnumGameStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GameStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'GameStatus[]'
+   */
+  export type ListEnumGameStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'GameStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -5579,6 +5699,7 @@ export namespace Prisma {
     username?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     games?: GameListRelationFilter
+    playing?: GameListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -5586,6 +5707,7 @@ export namespace Prisma {
     username?: SortOrder
     password?: SortOrder
     games?: GameOrderByRelationAggregateInput
+    playing?: GameOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -5596,6 +5718,7 @@ export namespace Prisma {
     NOT?: UserWhereInput | UserWhereInput[]
     password?: StringFilter<"User"> | string
     games?: GameListRelationFilter
+    playing?: GameListRelationFilter
   }, "id" | "username">
 
   export type UserOrderByWithAggregationInput = {
@@ -5623,7 +5746,9 @@ export namespace Prisma {
     id?: StringFilter<"Game"> | string
     game?: StringFilter<"Game"> | string
     userId?: StringFilter<"Game"> | string
+    status?: EnumGameStatusFilter<"Game"> | $Enums.GameStatus
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    players?: UserListRelationFilter
     questions?: QuestionListRelationFilter
   }
 
@@ -5631,7 +5756,9 @@ export namespace Prisma {
     id?: SortOrder
     game?: SortOrder
     userId?: SortOrder
+    status?: SortOrder
     user?: UserOrderByWithRelationInput
+    players?: UserOrderByRelationAggregateInput
     questions?: QuestionOrderByRelationAggregateInput
   }
 
@@ -5642,7 +5769,9 @@ export namespace Prisma {
     NOT?: GameWhereInput | GameWhereInput[]
     game?: StringFilter<"Game"> | string
     userId?: StringFilter<"Game"> | string
+    status?: EnumGameStatusFilter<"Game"> | $Enums.GameStatus
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    players?: UserListRelationFilter
     questions?: QuestionListRelationFilter
   }, "id">
 
@@ -5650,6 +5779,7 @@ export namespace Prisma {
     id?: SortOrder
     game?: SortOrder
     userId?: SortOrder
+    status?: SortOrder
     _count?: GameCountOrderByAggregateInput
     _max?: GameMaxOrderByAggregateInput
     _min?: GameMinOrderByAggregateInput
@@ -5662,6 +5792,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Game"> | string
     game?: StringWithAggregatesFilter<"Game"> | string
     userId?: StringWithAggregatesFilter<"Game"> | string
+    status?: EnumGameStatusWithAggregatesFilter<"Game"> | $Enums.GameStatus
   }
 
   export type QuestionWhereInput = {
@@ -5772,6 +5903,7 @@ export namespace Prisma {
     username: string
     password: string
     games?: GameCreateNestedManyWithoutUserInput
+    playing?: GameCreateNestedManyWithoutPlayersInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -5779,6 +5911,7 @@ export namespace Prisma {
     username: string
     password: string
     games?: GameUncheckedCreateNestedManyWithoutUserInput
+    playing?: GameUncheckedCreateNestedManyWithoutPlayersInput
   }
 
   export type UserUpdateInput = {
@@ -5786,6 +5919,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     games?: GameUpdateManyWithoutUserNestedInput
+    playing?: GameUpdateManyWithoutPlayersNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -5793,6 +5927,7 @@ export namespace Prisma {
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     games?: GameUncheckedUpdateManyWithoutUserNestedInput
+    playing?: GameUncheckedUpdateManyWithoutPlayersNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -5816,7 +5951,9 @@ export namespace Prisma {
   export type GameCreateInput = {
     id?: string
     game: string
+    status?: $Enums.GameStatus
     user: UserCreateNestedOneWithoutGamesInput
+    players?: UserCreateNestedManyWithoutPlayingInput
     questions?: QuestionCreateNestedManyWithoutGameInput
   }
 
@@ -5824,13 +5961,17 @@ export namespace Prisma {
     id?: string
     game: string
     userId: string
+    status?: $Enums.GameStatus
+    players?: UserUncheckedCreateNestedManyWithoutPlayingInput
     questions?: QuestionUncheckedCreateNestedManyWithoutGameInput
   }
 
   export type GameUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
     user?: UserUpdateOneRequiredWithoutGamesNestedInput
+    players?: UserUpdateManyWithoutPlayingNestedInput
     questions?: QuestionUpdateManyWithoutGameNestedInput
   }
 
@@ -5838,6 +5979,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
+    players?: UserUncheckedUpdateManyWithoutPlayingNestedInput
     questions?: QuestionUncheckedUpdateManyWithoutGameNestedInput
   }
 
@@ -5845,17 +5988,20 @@ export namespace Prisma {
     id?: string
     game: string
     userId: string
+    status?: $Enums.GameStatus
   }
 
   export type GameUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   }
 
   export type GameUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   }
 
   export type QuestionCreateInput = {
@@ -6019,15 +6165,32 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type EnumGameStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.GameStatus | EnumGameStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.GameStatus[] | ListEnumGameStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GameStatus[] | ListEnumGameStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumGameStatusFilter<$PrismaModel> | $Enums.GameStatus
+  }
+
   export type UserScalarRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
+  }
+
+  export type UserListRelationFilter = {
+    every?: UserWhereInput
+    some?: UserWhereInput
+    none?: UserWhereInput
   }
 
   export type QuestionListRelationFilter = {
     every?: QuestionWhereInput
     some?: QuestionWhereInput
     none?: QuestionWhereInput
+  }
+
+  export type UserOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type QuestionOrderByRelationAggregateInput = {
@@ -6038,18 +6201,31 @@ export namespace Prisma {
     id?: SortOrder
     game?: SortOrder
     userId?: SortOrder
+    status?: SortOrder
   }
 
   export type GameMaxOrderByAggregateInput = {
     id?: SortOrder
     game?: SortOrder
     userId?: SortOrder
+    status?: SortOrder
   }
 
   export type GameMinOrderByAggregateInput = {
     id?: SortOrder
     game?: SortOrder
     userId?: SortOrder
+    status?: SortOrder
+  }
+
+  export type EnumGameStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.GameStatus | EnumGameStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.GameStatus[] | ListEnumGameStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GameStatus[] | ListEnumGameStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumGameStatusWithAggregatesFilter<$PrismaModel> | $Enums.GameStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumGameStatusFilter<$PrismaModel>
+    _max?: NestedEnumGameStatusFilter<$PrismaModel>
   }
 
   export type GameScalarRelationFilter = {
@@ -6134,10 +6310,22 @@ export namespace Prisma {
     connect?: GameWhereUniqueInput | GameWhereUniqueInput[]
   }
 
+  export type GameCreateNestedManyWithoutPlayersInput = {
+    create?: XOR<GameCreateWithoutPlayersInput, GameUncheckedCreateWithoutPlayersInput> | GameCreateWithoutPlayersInput[] | GameUncheckedCreateWithoutPlayersInput[]
+    connectOrCreate?: GameCreateOrConnectWithoutPlayersInput | GameCreateOrConnectWithoutPlayersInput[]
+    connect?: GameWhereUniqueInput | GameWhereUniqueInput[]
+  }
+
   export type GameUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<GameCreateWithoutUserInput, GameUncheckedCreateWithoutUserInput> | GameCreateWithoutUserInput[] | GameUncheckedCreateWithoutUserInput[]
     connectOrCreate?: GameCreateOrConnectWithoutUserInput | GameCreateOrConnectWithoutUserInput[]
     createMany?: GameCreateManyUserInputEnvelope
+    connect?: GameWhereUniqueInput | GameWhereUniqueInput[]
+  }
+
+  export type GameUncheckedCreateNestedManyWithoutPlayersInput = {
+    create?: XOR<GameCreateWithoutPlayersInput, GameUncheckedCreateWithoutPlayersInput> | GameCreateWithoutPlayersInput[] | GameUncheckedCreateWithoutPlayersInput[]
+    connectOrCreate?: GameCreateOrConnectWithoutPlayersInput | GameCreateOrConnectWithoutPlayersInput[]
     connect?: GameWhereUniqueInput | GameWhereUniqueInput[]
   }
 
@@ -6159,6 +6347,19 @@ export namespace Prisma {
     deleteMany?: GameScalarWhereInput | GameScalarWhereInput[]
   }
 
+  export type GameUpdateManyWithoutPlayersNestedInput = {
+    create?: XOR<GameCreateWithoutPlayersInput, GameUncheckedCreateWithoutPlayersInput> | GameCreateWithoutPlayersInput[] | GameUncheckedCreateWithoutPlayersInput[]
+    connectOrCreate?: GameCreateOrConnectWithoutPlayersInput | GameCreateOrConnectWithoutPlayersInput[]
+    upsert?: GameUpsertWithWhereUniqueWithoutPlayersInput | GameUpsertWithWhereUniqueWithoutPlayersInput[]
+    set?: GameWhereUniqueInput | GameWhereUniqueInput[]
+    disconnect?: GameWhereUniqueInput | GameWhereUniqueInput[]
+    delete?: GameWhereUniqueInput | GameWhereUniqueInput[]
+    connect?: GameWhereUniqueInput | GameWhereUniqueInput[]
+    update?: GameUpdateWithWhereUniqueWithoutPlayersInput | GameUpdateWithWhereUniqueWithoutPlayersInput[]
+    updateMany?: GameUpdateManyWithWhereWithoutPlayersInput | GameUpdateManyWithWhereWithoutPlayersInput[]
+    deleteMany?: GameScalarWhereInput | GameScalarWhereInput[]
+  }
+
   export type GameUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<GameCreateWithoutUserInput, GameUncheckedCreateWithoutUserInput> | GameCreateWithoutUserInput[] | GameUncheckedCreateWithoutUserInput[]
     connectOrCreate?: GameCreateOrConnectWithoutUserInput | GameCreateOrConnectWithoutUserInput[]
@@ -6173,10 +6374,29 @@ export namespace Prisma {
     deleteMany?: GameScalarWhereInput | GameScalarWhereInput[]
   }
 
+  export type GameUncheckedUpdateManyWithoutPlayersNestedInput = {
+    create?: XOR<GameCreateWithoutPlayersInput, GameUncheckedCreateWithoutPlayersInput> | GameCreateWithoutPlayersInput[] | GameUncheckedCreateWithoutPlayersInput[]
+    connectOrCreate?: GameCreateOrConnectWithoutPlayersInput | GameCreateOrConnectWithoutPlayersInput[]
+    upsert?: GameUpsertWithWhereUniqueWithoutPlayersInput | GameUpsertWithWhereUniqueWithoutPlayersInput[]
+    set?: GameWhereUniqueInput | GameWhereUniqueInput[]
+    disconnect?: GameWhereUniqueInput | GameWhereUniqueInput[]
+    delete?: GameWhereUniqueInput | GameWhereUniqueInput[]
+    connect?: GameWhereUniqueInput | GameWhereUniqueInput[]
+    update?: GameUpdateWithWhereUniqueWithoutPlayersInput | GameUpdateWithWhereUniqueWithoutPlayersInput[]
+    updateMany?: GameUpdateManyWithWhereWithoutPlayersInput | GameUpdateManyWithWhereWithoutPlayersInput[]
+    deleteMany?: GameScalarWhereInput | GameScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutGamesInput = {
     create?: XOR<UserCreateWithoutGamesInput, UserUncheckedCreateWithoutGamesInput>
     connectOrCreate?: UserCreateOrConnectWithoutGamesInput
     connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedManyWithoutPlayingInput = {
+    create?: XOR<UserCreateWithoutPlayingInput, UserUncheckedCreateWithoutPlayingInput> | UserCreateWithoutPlayingInput[] | UserUncheckedCreateWithoutPlayingInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutPlayingInput | UserCreateOrConnectWithoutPlayingInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
   export type QuestionCreateNestedManyWithoutGameInput = {
@@ -6186,11 +6406,21 @@ export namespace Prisma {
     connect?: QuestionWhereUniqueInput | QuestionWhereUniqueInput[]
   }
 
+  export type UserUncheckedCreateNestedManyWithoutPlayingInput = {
+    create?: XOR<UserCreateWithoutPlayingInput, UserUncheckedCreateWithoutPlayingInput> | UserCreateWithoutPlayingInput[] | UserUncheckedCreateWithoutPlayingInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutPlayingInput | UserCreateOrConnectWithoutPlayingInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
   export type QuestionUncheckedCreateNestedManyWithoutGameInput = {
     create?: XOR<QuestionCreateWithoutGameInput, QuestionUncheckedCreateWithoutGameInput> | QuestionCreateWithoutGameInput[] | QuestionUncheckedCreateWithoutGameInput[]
     connectOrCreate?: QuestionCreateOrConnectWithoutGameInput | QuestionCreateOrConnectWithoutGameInput[]
     createMany?: QuestionCreateManyGameInputEnvelope
     connect?: QuestionWhereUniqueInput | QuestionWhereUniqueInput[]
+  }
+
+  export type EnumGameStatusFieldUpdateOperationsInput = {
+    set?: $Enums.GameStatus
   }
 
   export type UserUpdateOneRequiredWithoutGamesNestedInput = {
@@ -6199,6 +6429,19 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutGamesInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutGamesInput, UserUpdateWithoutGamesInput>, UserUncheckedUpdateWithoutGamesInput>
+  }
+
+  export type UserUpdateManyWithoutPlayingNestedInput = {
+    create?: XOR<UserCreateWithoutPlayingInput, UserUncheckedCreateWithoutPlayingInput> | UserCreateWithoutPlayingInput[] | UserUncheckedCreateWithoutPlayingInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutPlayingInput | UserCreateOrConnectWithoutPlayingInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutPlayingInput | UserUpsertWithWhereUniqueWithoutPlayingInput[]
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutPlayingInput | UserUpdateWithWhereUniqueWithoutPlayingInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutPlayingInput | UserUpdateManyWithWhereWithoutPlayingInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
   export type QuestionUpdateManyWithoutGameNestedInput = {
@@ -6213,6 +6456,19 @@ export namespace Prisma {
     update?: QuestionUpdateWithWhereUniqueWithoutGameInput | QuestionUpdateWithWhereUniqueWithoutGameInput[]
     updateMany?: QuestionUpdateManyWithWhereWithoutGameInput | QuestionUpdateManyWithWhereWithoutGameInput[]
     deleteMany?: QuestionScalarWhereInput | QuestionScalarWhereInput[]
+  }
+
+  export type UserUncheckedUpdateManyWithoutPlayingNestedInput = {
+    create?: XOR<UserCreateWithoutPlayingInput, UserUncheckedCreateWithoutPlayingInput> | UserCreateWithoutPlayingInput[] | UserUncheckedCreateWithoutPlayingInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutPlayingInput | UserCreateOrConnectWithoutPlayingInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutPlayingInput | UserUpsertWithWhereUniqueWithoutPlayingInput[]
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutPlayingInput | UserUpdateWithWhereUniqueWithoutPlayingInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutPlayingInput | UserUpdateManyWithWhereWithoutPlayingInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
   export type QuestionUncheckedUpdateManyWithoutGameNestedInput = {
@@ -6345,6 +6601,23 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type NestedEnumGameStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.GameStatus | EnumGameStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.GameStatus[] | ListEnumGameStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GameStatus[] | ListEnumGameStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumGameStatusFilter<$PrismaModel> | $Enums.GameStatus
+  }
+
+  export type NestedEnumGameStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.GameStatus | EnumGameStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.GameStatus[] | ListEnumGameStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.GameStatus[] | ListEnumGameStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumGameStatusWithAggregatesFilter<$PrismaModel> | $Enums.GameStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumGameStatusFilter<$PrismaModel>
+    _max?: NestedEnumGameStatusFilter<$PrismaModel>
+  }
+
   export type NestedBoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -6361,12 +6634,16 @@ export namespace Prisma {
   export type GameCreateWithoutUserInput = {
     id?: string
     game: string
+    status?: $Enums.GameStatus
+    players?: UserCreateNestedManyWithoutPlayingInput
     questions?: QuestionCreateNestedManyWithoutGameInput
   }
 
   export type GameUncheckedCreateWithoutUserInput = {
     id?: string
     game: string
+    status?: $Enums.GameStatus
+    players?: UserUncheckedCreateNestedManyWithoutPlayingInput
     questions?: QuestionUncheckedCreateNestedManyWithoutGameInput
   }
 
@@ -6378,6 +6655,27 @@ export namespace Prisma {
   export type GameCreateManyUserInputEnvelope = {
     data: GameCreateManyUserInput | GameCreateManyUserInput[]
     skipDuplicates?: boolean
+  }
+
+  export type GameCreateWithoutPlayersInput = {
+    id?: string
+    game: string
+    status?: $Enums.GameStatus
+    user: UserCreateNestedOneWithoutGamesInput
+    questions?: QuestionCreateNestedManyWithoutGameInput
+  }
+
+  export type GameUncheckedCreateWithoutPlayersInput = {
+    id?: string
+    game: string
+    userId: string
+    status?: $Enums.GameStatus
+    questions?: QuestionUncheckedCreateNestedManyWithoutGameInput
+  }
+
+  export type GameCreateOrConnectWithoutPlayersInput = {
+    where: GameWhereUniqueInput
+    create: XOR<GameCreateWithoutPlayersInput, GameUncheckedCreateWithoutPlayersInput>
   }
 
   export type GameUpsertWithWhereUniqueWithoutUserInput = {
@@ -6403,23 +6701,61 @@ export namespace Prisma {
     id?: StringFilter<"Game"> | string
     game?: StringFilter<"Game"> | string
     userId?: StringFilter<"Game"> | string
+    status?: EnumGameStatusFilter<"Game"> | $Enums.GameStatus
+  }
+
+  export type GameUpsertWithWhereUniqueWithoutPlayersInput = {
+    where: GameWhereUniqueInput
+    update: XOR<GameUpdateWithoutPlayersInput, GameUncheckedUpdateWithoutPlayersInput>
+    create: XOR<GameCreateWithoutPlayersInput, GameUncheckedCreateWithoutPlayersInput>
+  }
+
+  export type GameUpdateWithWhereUniqueWithoutPlayersInput = {
+    where: GameWhereUniqueInput
+    data: XOR<GameUpdateWithoutPlayersInput, GameUncheckedUpdateWithoutPlayersInput>
+  }
+
+  export type GameUpdateManyWithWhereWithoutPlayersInput = {
+    where: GameScalarWhereInput
+    data: XOR<GameUpdateManyMutationInput, GameUncheckedUpdateManyWithoutPlayersInput>
   }
 
   export type UserCreateWithoutGamesInput = {
     id?: string
     username: string
     password: string
+    playing?: GameCreateNestedManyWithoutPlayersInput
   }
 
   export type UserUncheckedCreateWithoutGamesInput = {
     id?: string
     username: string
     password: string
+    playing?: GameUncheckedCreateNestedManyWithoutPlayersInput
   }
 
   export type UserCreateOrConnectWithoutGamesInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutGamesInput, UserUncheckedCreateWithoutGamesInput>
+  }
+
+  export type UserCreateWithoutPlayingInput = {
+    id?: string
+    username: string
+    password: string
+    games?: GameCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutPlayingInput = {
+    id?: string
+    username: string
+    password: string
+    games?: GameUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutPlayingInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutPlayingInput, UserUncheckedCreateWithoutPlayingInput>
   }
 
   export type QuestionCreateWithoutGameInput = {
@@ -6461,12 +6797,39 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
+    playing?: GameUpdateManyWithoutPlayersNestedInput
   }
 
   export type UserUncheckedUpdateWithoutGamesInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
+    playing?: GameUncheckedUpdateManyWithoutPlayersNestedInput
+  }
+
+  export type UserUpsertWithWhereUniqueWithoutPlayingInput = {
+    where: UserWhereUniqueInput
+    update: XOR<UserUpdateWithoutPlayingInput, UserUncheckedUpdateWithoutPlayingInput>
+    create: XOR<UserCreateWithoutPlayingInput, UserUncheckedCreateWithoutPlayingInput>
+  }
+
+  export type UserUpdateWithWhereUniqueWithoutPlayingInput = {
+    where: UserWhereUniqueInput
+    data: XOR<UserUpdateWithoutPlayingInput, UserUncheckedUpdateWithoutPlayingInput>
+  }
+
+  export type UserUpdateManyWithWhereWithoutPlayingInput = {
+    where: UserScalarWhereInput
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutPlayingInput>
+  }
+
+  export type UserScalarWhereInput = {
+    AND?: UserScalarWhereInput | UserScalarWhereInput[]
+    OR?: UserScalarWhereInput[]
+    NOT?: UserScalarWhereInput | UserScalarWhereInput[]
+    id?: StringFilter<"User"> | string
+    username?: StringFilter<"User"> | string
+    password?: StringFilter<"User"> | string
   }
 
   export type QuestionUpsertWithWhereUniqueWithoutGameInput = {
@@ -6498,13 +6861,17 @@ export namespace Prisma {
   export type GameCreateWithoutQuestionsInput = {
     id?: string
     game: string
+    status?: $Enums.GameStatus
     user: UserCreateNestedOneWithoutGamesInput
+    players?: UserCreateNestedManyWithoutPlayingInput
   }
 
   export type GameUncheckedCreateWithoutQuestionsInput = {
     id?: string
     game: string
     userId: string
+    status?: $Enums.GameStatus
+    players?: UserUncheckedCreateNestedManyWithoutPlayingInput
   }
 
   export type GameCreateOrConnectWithoutQuestionsInput = {
@@ -6548,13 +6915,17 @@ export namespace Prisma {
   export type GameUpdateWithoutQuestionsInput = {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
     user?: UserUpdateOneRequiredWithoutGamesNestedInput
+    players?: UserUpdateManyWithoutPlayingNestedInput
   }
 
   export type GameUncheckedUpdateWithoutQuestionsInput = {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
+    players?: UserUncheckedUpdateManyWithoutPlayingNestedInput
   }
 
   export type OptionUpsertWithWhereUniqueWithoutQuestionInput = {
@@ -6630,29 +7001,78 @@ export namespace Prisma {
   export type GameCreateManyUserInput = {
     id?: string
     game: string
+    status?: $Enums.GameStatus
   }
 
   export type GameUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
+    players?: UserUpdateManyWithoutPlayingNestedInput
     questions?: QuestionUpdateManyWithoutGameNestedInput
   }
 
   export type GameUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
+    players?: UserUncheckedUpdateManyWithoutPlayingNestedInput
     questions?: QuestionUncheckedUpdateManyWithoutGameNestedInput
   }
 
   export type GameUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     game?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
+  }
+
+  export type GameUpdateWithoutPlayersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    game?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
+    user?: UserUpdateOneRequiredWithoutGamesNestedInput
+    questions?: QuestionUpdateManyWithoutGameNestedInput
+  }
+
+  export type GameUncheckedUpdateWithoutPlayersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    game?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
+    questions?: QuestionUncheckedUpdateManyWithoutGameNestedInput
+  }
+
+  export type GameUncheckedUpdateManyWithoutPlayersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    game?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    status?: EnumGameStatusFieldUpdateOperationsInput | $Enums.GameStatus
   }
 
   export type QuestionCreateManyGameInput = {
     id?: string
     question: string
     explanation: string
+  }
+
+  export type UserUpdateWithoutPlayingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    games?: GameUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutPlayingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    games?: GameUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateManyWithoutPlayingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
   }
 
   export type QuestionUpdateWithoutGameInput = {

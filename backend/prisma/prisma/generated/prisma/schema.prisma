@@ -8,20 +8,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id       String @id @default(uuid())
   username String @unique
   password String
-  games    Game[]
+  games    Game[] @relation("CreatorGames")
+  playing  Game[] @relation("PlayerGames")
 }
 
 model Game {
   id        String     @id @default(uuid())
   game      String
   userId    String
-  user      User       @relation(fields: [userId], references: [id])
+  user      User       @relation("CreatorGames", fields: [userId], references: [id])
+  players   User[]     @relation("PlayerGames")
   questions Question[]
+  status    GameStatus @default(WAITING)
 }
 
 model Question {
@@ -39,4 +41,10 @@ model Option {
   isCorrect  Boolean
   questionId String
   question   Question @relation(fields: [questionId], references: [id])
+}
+
+enum GameStatus {
+  WAITING
+  STARTED
+  COMPLETED
 }
