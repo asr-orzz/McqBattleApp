@@ -28,7 +28,8 @@ model Game {
   questions Question[]
   answers   UserAnswer[]
 
-  status GameStatus @default(WAITING)
+  status  GameStatus @default(WAITING)
+  private Boolean    @default(true)
 }
 
 model Player {

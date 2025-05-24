@@ -2,6 +2,7 @@ import { Router } from "express";
 import prisma from "../prisma/client";
 import { userMiddleware } from "../middleware/userMiddleware";
 import { GameStatus } from "../../prisma/prisma/generated/prisma";
+import pusher from "../pusher";
 
 export const gameRouter = Router();
 
@@ -9,15 +10,7 @@ gameRouter.get("/", async (req, res) => {
   try {
     const games = await prisma.game.findMany({
       include: {
-        user: true,
-        players: {
-          include: { user: true }
-        },
-        questions: {
-          include: {
-            options: true
-          }
-        }
+        user: true
       }
     });
     res.json(games);
@@ -30,8 +23,8 @@ gameRouter.post("/create", userMiddleware, async (req, res) => {
   const { game, userId } = req.body;
 
   if (!game || !userId) {
-    res.status(400).json({ error: "Missing game name or userId" });
-    return;
+     res.status(400).json({ error: "Missing game name or userId" });
+     return;
   }
 
   try {
@@ -39,46 +32,30 @@ gameRouter.post("/create", userMiddleware, async (req, res) => {
       data: {
         game,
         userId
-      }
+      },
+      include: {
+        user: true,
+        players: true,
+      },
     });
-    res.status(201).json(newGame);
+
+    await pusher.trigger("games", "new-game", {
+      id: newGame.id,
+      game: newGame.game,
+      creator: newGame.user.username,
+      status: newGame.status,
+      createdAt: new Date(),
+    });
+
+     res.status(201).json(newGame);
+     return;
   } catch (error) {
-    res.status(500).json({ error: "Failed to create game" });
+    console.error("Error creating game:", error);
+     res.status(500).json({ error: "Failed to create game" });
+     return
   }
 });
 
-gameRouter.post("/:id/join", userMiddleware, async (req, res) => {
-  const { id: gameId } = req.params;
-  const { userId } = req.body;
-
-  try {
-    const existingPlayer = await prisma.player.findUnique({
-      where: {
-        userId_gameId: {
-          userId,
-          gameId
-        }
-      }
-    });
-
-    if (existingPlayer) {
-       res.status(400).json({ error: "User already joined this game" });
-       return;
-    }
-
-    await prisma.player.create({
-      data: {
-        userId,
-        gameId
-      }
-    });
-
-    res.status(200).json({ message: "User joined the game successfully" });
-  } catch (error) {
-    console.error("Join game error:", error);
-    res.status(500).json({ error: "Failed to join game" });
-  }
-});
 
 gameRouter.post("/:id/leave", userMiddleware, async (req, res) => {
   const { id: gameId } = req.params;
@@ -101,7 +78,7 @@ gameRouter.post("/:id/leave", userMiddleware, async (req, res) => {
   }
 });
 
-gameRouter.patch("/:id/status", userMiddleware, async (req, res) => {
+gameRouter.post("/:id/status", userMiddleware, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
 
