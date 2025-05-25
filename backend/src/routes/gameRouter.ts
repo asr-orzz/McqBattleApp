@@ -56,112 +56,95 @@ gameRouter.post("/create", userMiddleware, async (req, res) => {
   }
 });
 
+gameRouter.post("/join-request", userMiddleware, async (req, res) => {
+  const { gameId, userId } = req.body;
 
-gameRouter.post("/:id/leave", userMiddleware, async (req, res) => {
-  const { id: gameId } = req.params;
-  const { userId } = req.body;
-
-  try {
-    await prisma.player.delete({
-      where: {
-        userId_gameId: {
-          userId,
-          gameId
-        }
-      }
-    });
-
-    res.status(200).json({ message: "User left the game successfully" });
-  } catch (error) {
-    console.error("Leave game error:", error);
-    res.status(500).json({ error: "Failed to leave game" });
-  }
-});
-
-gameRouter.post("/:id/status", userMiddleware, async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-
-  if (!Object.values(GameStatus).includes(status)) {
-    res.status(400).json({ error: "Invalid status value" });
-    return;
+  if (!gameId || !userId) {
+     res.status(400).json({ error: "Missing gameId or userId" });
+     return
   }
 
   try {
-    const updatedGame = await prisma.game.update({
-      where: { id },
-      data: { status },
-    });
-    res.json(updatedGame);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update game status" });
-  }
-});
-
-gameRouter.put("/:id", userMiddleware, async (req, res) => {
-  const { id } = req.params;
-  const { game } = req.body;
-
-  try {
-    const updatedGame = await prisma.game.update({
-      where: { id },
-      data: { game }
-    });
-    res.json(updatedGame);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update game" });
-  }
-});
-
-gameRouter.delete("/:id", userMiddleware, async (req, res) => {
-  const { id } = req.params;
-  try {
-    await prisma.game.delete({ where: { id } });
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete game" });
-  }
-});
-
-gameRouter.post("/submit-answer", userMiddleware, async (req, res) => {
-  const { userId, gameId, questionId, optionId } = req.body;
-
-  if (!userId || !gameId || !questionId || !optionId) {
-     res.status(400).json({ error: "Missing fields in request" });
-     return;
-  }
-
-  try {
-    const answer = await prisma.userAnswer.create({
-      data: {
-        userId,
-        gameId,
-        questionId,
-        optionId
-      }
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: { user: true },
     });
 
-    const selectedOption = await prisma.option.findUnique({
-      where: { id: optionId }
-    });
-
-    if (selectedOption?.isCorrect) {
-      await prisma.player.update({
-        where: {
-          userId_gameId: {
-            userId,
-            gameId
-          }
-        },
-        data: {
-          score: { increment: 1 }
-        }
-      });
+    if (!game) {
+       res.status(404).json({ error: "Game not found" });
+       return
+    }
+    if (game.userId === userId) {
+      res.status(403).json({ error: "Owner cannot join the game as a player" });
+      return
     }
 
-    res.status(201).json(answer);
+    await pusher.trigger(`game-${gameId}`, "join-request", {
+      gameId: game.id,
+      requesterId: userId
+    });
+
+     res.status(200).json({ message: "Join request sent to the game owner" });
+     return
   } catch (error) {
-    console.error("Submit answer error:", error);
-    res.status(500).json({ error: "Failed to submit answer" });
+    console.error("Join request error:", error);
+     res.status(500).json({ error: "Internal server error" });
+     return
   }
 });
+
+gameRouter.post("/accept-request", userMiddleware, async (req, res) => {
+  const { gameId, requesterId } = req.body;
+
+  if (!gameId || !requesterId) {
+       res.status(400).json({ error: "Missing gameId or requesterId" });
+       return
+  }
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+       res.status(404).json({ error: "Game not found" });
+       return
+    }
+
+    if (req.body.userId !== game.userId) {
+       res.status(403).json({ error: "Only the game owner can accept join requests" });
+       return
+    }
+
+    const existingPlayer = await prisma.player.findFirst({
+      where: {
+        gameId: gameId,
+        userId: requesterId,
+      },
+    });
+
+    if (existingPlayer) {
+       res.status(400).json({ error: "User is already a player in this game" });
+       return
+    }
+
+    await prisma.player.create({
+      data: {
+        gameId: gameId,
+        userId: requesterId,
+      },
+    });
+    await pusher.trigger(`user-${requesterId}`, "join-accepted", {
+      gameId: gameId,
+    });
+
+     res.status(200).json({ message: "User successfully added to game" });
+     return
+  } catch (error) {
+    console.error("Accept request error:", error);
+    res.status(500).json({ error: "Internal server error" });
+    return
+  }
+});
+
+
