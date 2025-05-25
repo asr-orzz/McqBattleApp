@@ -11,6 +11,7 @@ datasource db {
 model User {
   id       String @id @default(uuid())
   username String @unique
+  email    String @unique
   password String
 
   games   Game[]       @relation("CreatorGames")
@@ -28,8 +29,7 @@ model Game {
   questions Question[]
   answers   UserAnswer[]
 
-  status  GameStatus @default(WAITING)
-  private Boolean    @default(true)
+  status GameStatus @default(WAITING)
 }
 
 model Player {

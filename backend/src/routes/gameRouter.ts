@@ -2,7 +2,7 @@ import { Router } from "express";
 import prisma from "../prisma/client";
 import { userMiddleware } from "../middleware/userMiddleware";
 import { GameStatus } from "../../prisma/prisma/generated/prisma";
-import pusher from "../pusher";
+import pusher from "../utils/pusher";
 
 export const gameRouter = Router();
 

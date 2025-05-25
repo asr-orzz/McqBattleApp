@@ -1523,18 +1523,21 @@ export namespace Prisma {
   export type UserMinAggregateOutputType = {
     id: string | null
     username: string | null
+    email: string | null
     password: string | null
   }
 
   export type UserMaxAggregateOutputType = {
     id: string | null
     username: string | null
+    email: string | null
     password: string | null
   }
 
   export type UserCountAggregateOutputType = {
     id: number
     username: number
+    email: number
     password: number
     _all: number
   }
@@ -1543,18 +1546,21 @@ export namespace Prisma {
   export type UserMinAggregateInputType = {
     id?: true
     username?: true
+    email?: true
     password?: true
   }
 
   export type UserMaxAggregateInputType = {
     id?: true
     username?: true
+    email?: true
     password?: true
   }
 
   export type UserCountAggregateInputType = {
     id?: true
     username?: true
+    email?: true
     password?: true
     _all?: true
   }
@@ -1634,6 +1640,7 @@ export namespace Prisma {
   export type UserGroupByOutputType = {
     id: string
     username: string
+    email: string
     password: string
     _count: UserCountAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
@@ -1657,6 +1664,7 @@ export namespace Prisma {
   export type UserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     username?: boolean
+    email?: boolean
     password?: boolean
     games?: boolean | User$gamesArgs<ExtArgs>
     players?: boolean | User$playersArgs<ExtArgs>
@@ -1667,22 +1675,25 @@ export namespace Prisma {
   export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     username?: boolean
+    email?: boolean
     password?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     username?: boolean
+    email?: boolean
     password?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
     id?: boolean
     username?: boolean
+    email?: boolean
     password?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "password", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "username" | "email" | "password", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     games?: boolean | User$gamesArgs<ExtArgs>
     players?: boolean | User$playersArgs<ExtArgs>
@@ -1702,6 +1713,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       username: string
+      email: string
       password: string
     }, ExtArgs["result"]["user"]>
     composites: {}
@@ -2131,6 +2143,7 @@ export namespace Prisma {
   interface UserFieldRefs {
     readonly id: FieldRef<"User", 'String'>
     readonly username: FieldRef<"User", 'String'>
+    readonly email: FieldRef<"User", 'String'>
     readonly password: FieldRef<"User", 'String'>
   }
     
@@ -8131,6 +8144,7 @@ export namespace Prisma {
   export const UserScalarFieldEnum: {
     id: 'id',
     username: 'username',
+    email: 'email',
     password: 'password'
   };
 
@@ -8297,6 +8311,7 @@ export namespace Prisma {
     NOT?: UserWhereInput | UserWhereInput[]
     id?: StringFilter<"User"> | string
     username?: StringFilter<"User"> | string
+    email?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     games?: GameListRelationFilter
     players?: PlayerListRelationFilter
@@ -8306,6 +8321,7 @@ export namespace Prisma {
   export type UserOrderByWithRelationInput = {
     id?: SortOrder
     username?: SortOrder
+    email?: SortOrder
     password?: SortOrder
     games?: GameOrderByRelationAggregateInput
     players?: PlayerOrderByRelationAggregateInput
@@ -8315,6 +8331,7 @@ export namespace Prisma {
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     username?: string
+    email?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
@@ -8322,11 +8339,12 @@ export namespace Prisma {
     games?: GameListRelationFilter
     players?: PlayerListRelationFilter
     answers?: UserAnswerListRelationFilter
-  }, "id" | "username">
+  }, "id" | "username" | "email">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
     username?: SortOrder
+    email?: SortOrder
     password?: SortOrder
     _count?: UserCountOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
@@ -8339,6 +8357,7 @@ export namespace Prisma {
     NOT?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"User"> | string
     username?: StringWithAggregatesFilter<"User"> | string
+    email?: StringWithAggregatesFilter<"User"> | string
     password?: StringWithAggregatesFilter<"User"> | string
   }
 
@@ -8643,6 +8662,7 @@ export namespace Prisma {
   export type UserCreateInput = {
     id?: string
     username: string
+    email: string
     password: string
     games?: GameCreateNestedManyWithoutUserInput
     players?: PlayerCreateNestedManyWithoutUserInput
@@ -8652,6 +8672,7 @@ export namespace Prisma {
   export type UserUncheckedCreateInput = {
     id?: string
     username: string
+    email: string
     password: string
     games?: GameUncheckedCreateNestedManyWithoutUserInput
     players?: PlayerUncheckedCreateNestedManyWithoutUserInput
@@ -8661,6 +8682,7 @@ export namespace Prisma {
   export type UserUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     games?: GameUpdateManyWithoutUserNestedInput
     players?: PlayerUpdateManyWithoutUserNestedInput
@@ -8670,6 +8692,7 @@ export namespace Prisma {
   export type UserUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     games?: GameUncheckedUpdateManyWithoutUserNestedInput
     players?: PlayerUncheckedUpdateManyWithoutUserNestedInput
@@ -8679,18 +8702,21 @@ export namespace Prisma {
   export type UserCreateManyInput = {
     id?: string
     username: string
+    email: string
     password: string
   }
 
   export type UserUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
   }
 
   export type UserUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
   }
 
@@ -9023,18 +9049,21 @@ export namespace Prisma {
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     username?: SortOrder
+    email?: SortOrder
     password?: SortOrder
   }
 
   export type UserMaxOrderByAggregateInput = {
     id?: SortOrder
     username?: SortOrder
+    email?: SortOrder
     password?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
     id?: SortOrder
     username?: SortOrder
+    email?: SortOrder
     password?: SortOrder
   }
 
@@ -10119,6 +10148,7 @@ export namespace Prisma {
   export type UserCreateWithoutGamesInput = {
     id?: string
     username: string
+    email: string
     password: string
     players?: PlayerCreateNestedManyWithoutUserInput
     answers?: UserAnswerCreateNestedManyWithoutUserInput
@@ -10127,6 +10157,7 @@ export namespace Prisma {
   export type UserUncheckedCreateWithoutGamesInput = {
     id?: string
     username: string
+    email: string
     password: string
     players?: PlayerUncheckedCreateNestedManyWithoutUserInput
     answers?: UserAnswerUncheckedCreateNestedManyWithoutUserInput
@@ -10227,6 +10258,7 @@ export namespace Prisma {
   export type UserUpdateWithoutGamesInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     players?: PlayerUpdateManyWithoutUserNestedInput
     answers?: UserAnswerUpdateManyWithoutUserNestedInput
@@ -10235,6 +10267,7 @@ export namespace Prisma {
   export type UserUncheckedUpdateWithoutGamesInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     players?: PlayerUncheckedUpdateManyWithoutUserNestedInput
     answers?: UserAnswerUncheckedUpdateManyWithoutUserNestedInput
@@ -10301,6 +10334,7 @@ export namespace Prisma {
   export type UserCreateWithoutPlayersInput = {
     id?: string
     username: string
+    email: string
     password: string
     games?: GameCreateNestedManyWithoutUserInput
     answers?: UserAnswerCreateNestedManyWithoutUserInput
@@ -10309,6 +10343,7 @@ export namespace Prisma {
   export type UserUncheckedCreateWithoutPlayersInput = {
     id?: string
     username: string
+    email: string
     password: string
     games?: GameUncheckedCreateNestedManyWithoutUserInput
     answers?: UserAnswerUncheckedCreateNestedManyWithoutUserInput
@@ -10356,6 +10391,7 @@ export namespace Prisma {
   export type UserUpdateWithoutPlayersInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     games?: GameUpdateManyWithoutUserNestedInput
     answers?: UserAnswerUpdateManyWithoutUserNestedInput
@@ -10364,6 +10400,7 @@ export namespace Prisma {
   export type UserUncheckedUpdateWithoutPlayersInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     games?: GameUncheckedUpdateManyWithoutUserNestedInput
     answers?: UserAnswerUncheckedUpdateManyWithoutUserNestedInput
@@ -10635,6 +10672,7 @@ export namespace Prisma {
   export type UserCreateWithoutAnswersInput = {
     id?: string
     username: string
+    email: string
     password: string
     games?: GameCreateNestedManyWithoutUserInput
     players?: PlayerCreateNestedManyWithoutUserInput
@@ -10643,6 +10681,7 @@ export namespace Prisma {
   export type UserUncheckedCreateWithoutAnswersInput = {
     id?: string
     username: string
+    email: string
     password: string
     games?: GameUncheckedCreateNestedManyWithoutUserInput
     players?: PlayerUncheckedCreateNestedManyWithoutUserInput
@@ -10730,6 +10769,7 @@ export namespace Prisma {
   export type UserUpdateWithoutAnswersInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     games?: GameUpdateManyWithoutUserNestedInput
     players?: PlayerUpdateManyWithoutUserNestedInput
@@ -10738,6 +10778,7 @@ export namespace Prisma {
   export type UserUncheckedUpdateWithoutAnswersInput = {
     id?: StringFieldUpdateOperationsInput | string
     username?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     games?: GameUncheckedUpdateManyWithoutUserNestedInput
     players?: PlayerUncheckedUpdateManyWithoutUserNestedInput
