@@ -6,10 +6,30 @@ export const optionRouter = Router();
 
 optionRouter.use(userMiddleware);
 
-optionRouter.post("/create", async (req, res) => {
-  const { option, isCorrect, questionId } = req.body;
+optionRouter.post("/create", userMiddleware, async (req, res) => {
+  const { option, isCorrect, questionId, gameId } = req.body;
+  const userId = req.body.userId;
+
+  if (!option || isCorrect === undefined || !questionId || !gameId) {
+     res.status(400).json({ error: "Missing required fields" });
+     return
+  }
 
   try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+       res.status(404).json({ error: "Game not found" });
+       return
+    }
+
+    if (game.userId !== userId) {
+       res.status(403).json({ error: "Only the game owner can create options" });
+       return
+    }
+
     const newOption = await prisma.option.create({
       data: {
         option,
@@ -18,53 +38,44 @@ optionRouter.post("/create", async (req, res) => {
       },
     });
 
-    res.status(201).json(newOption);
+     res.status(201).json(newOption);
+     return
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to create option" });
-  }
-});
-
-optionRouter.get("/", async (req, res) => {
-  const { questionId } = req.query;
-
-  try {
-    const options = await prisma.option.findMany({
-      where: questionId ? { questionId: String(questionId) } : {},
-    });
-
-    res.json(options);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch options" });
-  }
-});
-
-optionRouter.get("/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const option = await prisma.option.findUnique({
-      where: { id },
-    });
-
-    if (!option) {
-       res.status(404).json({ error: "Option not found" });
-       return
-    }
-
-    res.json(option);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch option" });
+     res.status(500).json({ error: "Failed to create option" });
+     return
   }
 });
 
 optionRouter.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { option, isCorrect } = req.body;
+  const userId = req.body.userId;
 
   try {
+    const existingOption = await prisma.option.findUnique({
+      where: { id },
+      include: {
+        question: {
+          include: {
+            game: true,
+          },
+        },
+      },
+    });
+
+    if (!existingOption) {
+       res.status(404).json({ error: "Option not found" });
+       return
+    }
+
+    const game = existingOption.question.game;
+
+    if (game.userId !== userId) {
+       res.status(403).json({ error: "Only the game owner can update options" });
+       return
+    }
+
     const updatedOption = await prisma.option.update({
       where: { id },
       data: {
@@ -74,9 +85,11 @@ optionRouter.put("/:id", async (req, res) => {
     });
 
     res.json(updatedOption);
+    return
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to update option" });
+     res.status(500).json({ error: "Failed to update option" });
+     return
   }
 });
 
@@ -95,4 +108,44 @@ optionRouter.delete("/:id", async (req, res) => {
   }
 });
 
+optionRouter.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  const userId = req.body.userId;
+
+  try {
+    const option = await prisma.option.findUnique({
+      where: { id },
+      include: {
+        question: {
+          include: {
+            game: true,
+          },
+        },
+      },
+    });
+
+    if (!option) {
+      res.status(404).json({ error: "Option not found" });
+      return
+    }
+
+    const game = option.question.game;
+
+    if (game.userId !== userId) {
+       res.status(403).json({ error: "Only the game owner can delete options" });
+       return
+    }
+
+    await prisma.option.delete({
+      where: { id },
+    });
+
+     res.json({ message: "Option deleted successfully" });
+     return
+  } catch (err) {
+    console.error(err);
+     res.status(500).json({ error: "Failed to delete option" });
+     return
+  }
+});
 
