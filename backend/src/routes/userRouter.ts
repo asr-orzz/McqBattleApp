@@ -29,11 +29,11 @@ userRouter.post("/request-otp", async (req, res) => {
   const otp = generateOtp();
   const otpExpiry = dayjs().add(10, "minutes").toISOString();
   const passwordHash = await bcrypt.hash(password, 10);
-
+  const otpHash = await bcrypt.hash(otp,10);
   await sendOtpEmail(email, otp, username);
 
   const tempToken = jwt.sign(
-    { username, email, passwordHash, otp, otpExpiry },
+    { username, email, passwordHash, otpHash, otpExpiry },
     process.env.OTP_SECRET!,
     { expiresIn: "10m" }
   );
@@ -53,12 +53,13 @@ userRouter.post("/verify-otp", async (req, res) => {
       username: string;
       email: string;
       passwordHash: string;
-      otp: string;
+      otpHash: string;
       otpExpiry: string;
     };
 
-    if (userOtp !== data.otp) {
-       res.status(400).json({ msg: "Invalid OTP." });
+    const isMatch = await bcrypt.compare(userOtp, data.otpHash);
+    if (!isMatch) {
+       res.status(401).json({ msg: "Invalid Otp" });
        return
     }
 
