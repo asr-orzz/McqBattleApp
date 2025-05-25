@@ -161,3 +161,77 @@ playerRouter.post("/player-leave", userMiddleware, async (req, res) => {
      return
   }
 });
+
+playerRouter.get("/next-question", userMiddleware, async (req, res) => {
+  const { gameId } = req.query;
+  const userId = req.body.userId;
+
+  if (!gameId) {
+     res.status(400).json({ error: "Missing gameId" });
+     return
+  }
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: String(gameId) },
+      include: { questions: { orderBy: { createdAt: "asc" } } },
+    });
+
+    if (!game) {
+      res.status(404).json({ error: "Game not found" });
+      return
+    }
+
+    if (game.status !== "STARTED") {
+       res.status(400).json({ error: "Game has not started yet" });
+       return
+    }
+
+    const isPlayer = await prisma.player.findFirst({
+      where: {
+        userId,
+        gameId: String(gameId),
+      },
+    });
+
+    if (!isPlayer) {
+       res.status(403).json({ error: "You are not a player in this game" });
+       return
+    }
+
+    const answered = await prisma.userAnswer.findMany({
+      where: {
+        userId,
+        gameId: String(gameId),
+      },
+    });
+
+    const nextQuestion = game.questions[answered.length];
+
+    if (!nextQuestion) {
+       res.status(200).json({ message: "No more questions" });
+       return
+    }
+
+    const options = await prisma.option.findMany({
+      where: {
+        questionId: nextQuestion.id,
+      },
+      select: {
+        id: true,
+        option: true, 
+      },
+    });
+
+     res.json({
+      id: nextQuestion.id,
+      question: nextQuestion.question,
+      options,
+    });
+    return
+  } catch (err) {
+    console.error(err);
+   res.status(500).json({ error: "Failed to get next question" });
+   return
+  }
+});

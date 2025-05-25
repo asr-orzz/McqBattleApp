@@ -146,7 +146,8 @@ exports.Prisma.QuestionScalarFieldEnum = {
   id: 'id',
   question: 'question',
   explanation: 'explanation',
-  gameId: 'gameId'
+  gameId: 'gameId',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.OptionScalarFieldEnum = {

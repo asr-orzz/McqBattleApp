@@ -52,8 +52,9 @@ model Question {
   gameId      String
   game        Game   @relation(fields: [gameId], references: [id])
 
-  options Option[]
-  answers UserAnswer[]
+  options   Option[]
+  answers   UserAnswer[]
+  createdAt DateTime     @default(now())
 }
 
 model Option {

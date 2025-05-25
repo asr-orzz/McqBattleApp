@@ -55,6 +55,7 @@ model Question {
 
   options     Option[]
   answers     UserAnswer[]
+   createdAt  DateTime  @default(now())
 }
 
 model Option {

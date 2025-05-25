@@ -8,8 +8,28 @@ questionRouter.use(userMiddleware);
 
 questionRouter.post("/create", async (req, res) => {
   const { question, explanation, gameId } = req.body;
+  const userId = req.body.userId;
+
+  if (!question || !explanation || !gameId) {
+     res.status(400).json({ error: "Missing required fields" });
+     return
+  }
 
   try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+       res.status(404).json({ error: "Game not found" });
+       return
+    }
+
+    if (game.userId !== userId) {
+       res.status(403).json({ error: "Only the game creator can add questions" });
+       return
+    }
+
     const newQuestion = await prisma.question.create({
       data: {
         question,
@@ -18,54 +38,75 @@ questionRouter.post("/create", async (req, res) => {
       },
     });
 
-    res.status(201).json(newQuestion);
+     res.status(201).json(newQuestion);
+     return
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to create question" });
+     res.status(500).json({ error: "Failed to create question" });
+     return
   }
 });
 
 questionRouter.get("/", async (req, res) => {
   const { gameId } = req.query;
+  const userId = req.body.userId;
+
+  if (!gameId) {
+     res.status(400).json({ error: "Missing gameId" });
+     return
+  }
 
   try {
-    const questions = await prisma.question.findMany({
-      where: gameId ? { gameId: String(gameId) } : {},
+    const game = await prisma.game.findUnique({
+      where: { id: String(gameId) },
     });
 
-    res.json(questions);
+    if (!game) {
+       res.status(404).json({ error: "Game not found" });
+       return
+    }
+
+    if (game.userId !== userId) {
+       res.status(403).json({ error: "Only the game owner can view the questions" });
+       return
+    }
+
+    const questions = await prisma.question.findMany({
+      where: { gameId: String(gameId) },
+    });
+
+     res.json(questions);
+     return
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to fetch questions" });
+     res.status(500).json({ error: "Failed to fetch questions" });
+     return
   }
 });
 
-questionRouter.get("/:id", async (req, res) => {
-
+questionRouter.put("/:id", userMiddleware, async (req, res) => {
   const { id } = req.params;
+  const { question, explanation } = req.body;
+  const userId = req.body.userId;
 
   try {
-    const question = await prisma.question.findUnique({
+    const existingQuestion = await prisma.question.findUnique({
       where: { id },
+      include: {
+        game: true,
+      },
     });
 
-    if (!question) {
-         res.status(404).json({ error: "Question not found" });
+    if (!existingQuestion) {
+       res.status(404).json({ error: "Question not found" });
+       return
+    }
+
+    if (existingQuestion.game.userId !== userId) {
+         res.status(403).json({ error: "Only the game owner can update the question" });
          return
     }
 
-    res.json(question);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch question" });
-  }
-});
-
-questionRouter.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { question, explanation } = req.body;
-
-  try {
     const updatedQuestion = await prisma.question.update({
       where: { id },
       data: {
@@ -74,24 +115,46 @@ questionRouter.put("/:id", async (req, res) => {
       },
     });
 
-    res.json(updatedQuestion);
+     res.json(updatedQuestion);
+     return
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to update question" });
+     res.status(500).json({ error: "Failed to update question" });
+     return
   }
 });
 
-questionRouter.delete("/:id", async (req, res) => {
+questionRouter.delete("/:id", userMiddleware, async (req, res) => {
   const { id } = req.params;
+  const userId = req.body.userId;
 
   try {
+    const existingQuestion = await prisma.question.findUnique({
+      where: { id },
+      include: {
+        game: true,
+      },
+    });
+
+    if (!existingQuestion) {
+       res.status(404).json({ error: "Question not found" });
+       return
+    }
+
+    if (existingQuestion.game.userId !== userId) {
+       res.status(403).json({ error: "Only the game owner can delete the question" });
+       return
+    }
+
     await prisma.question.delete({
       where: { id },
     });
 
-    res.json({ message: "Question deleted successfully" });
+     res.json({ message: "Question deleted successfully" });
+     return
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to delete question" });
+     res.status(500).json({ error: "Failed to delete question" });
+     return
   }
 });
