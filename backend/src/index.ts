@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import cors from "cors"
 import express from 'express';
 import { userRouter } from './routes/userRouter';
 import { gameRouter } from "./routes/gameRouter";
@@ -10,12 +11,13 @@ import { playerRouter } from "./routes/playerRouter";
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.use("/api/v1/users",userRouter);
 app.use("/api/v1/games",gameRouter);
 app.use("/api/v1/questions",questionRouter);
 app.use("/api/v1/options",optionRouter);
-app.use("api/v1/players",playerRouter);
+app.use("/api/v1/players",playerRouter);
 function main(){
   app.listen(3000, () => {
       console.log('Server is running on http://localhost:3000');
