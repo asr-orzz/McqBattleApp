@@ -22,12 +22,9 @@ export default function HomePage() {
           </Link>
         </nav>
         <div className="ml-6 flex gap-2">
-              <Link href={"/auth"}>
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
+            <Link href={"/auth"}>
+                   <Button size="sm">Sign In</Button>
             </Link> 
-          <Button size="sm">Get Started</Button>
         </div>
       </header>
 
