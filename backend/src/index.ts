@@ -19,8 +19,8 @@ app.use("/api/v1/questions",questionRouter);
 app.use("/api/v1/options",optionRouter);
 app.use("/api/v1/players",playerRouter);
 function main(){
-  app.listen(3000, () => {
-      console.log('Server is running on http://localhost:3000');
+  app.listen(3001, () => {
+      console.log('Server is running on http://localhost:3001');
   });
 }
 
