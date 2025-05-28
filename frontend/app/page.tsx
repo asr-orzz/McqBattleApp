@@ -1,10 +1,14 @@
+"use client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Zap, Users, Trophy, Clock, Brain, Target, Play, CheckCircle, Gamepad2 } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function HomePage() {
+
+  const router = useRouter();
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
@@ -22,9 +26,9 @@ export default function HomePage() {
           </Link>
         </nav>
         <div className="ml-6 flex gap-2">
-            <Link href={"/auth"}>
-                   <Button size="sm">Sign In</Button>
-            </Link> 
+            <Button size="sm"
+              onClick={()=>{router.push("/auth")}}
+            >Sign In</Button>
         </div>
       </header>
 
@@ -49,12 +53,12 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href={"/dashboard/mygames"}>
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700"
+                      onClick={()=>{router.push("/dashboard/my-games")}}
+                    >
                       <Play className="w-4 h-4 mr-2" />
                       Start Battle Now
                     </Button>
-                  </Link>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-500">
                   <div className="flex items-center gap-1">
@@ -304,17 +308,17 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Link href={"/dashboard/mygames"}>
-                <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100">
+                <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100"
+                  onClick={()=>{router.push("/dashboard/my-games")}}
+                >
                   <Play className="w-4 h-4 mr-2" />
                   Start Your First Battle
                 </Button>
-                </Link>
-                <Link href={"/auth"}>
-                  <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100">
+                  <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100"
+                    onClick={()=>{router.push("/auth")}}
+                  >
                     Create Account
                   </Button>
-                </Link>
               </div>              
             </div>
           </div>

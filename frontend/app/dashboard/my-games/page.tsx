@@ -29,13 +29,14 @@ interface Game {
 }
 
 export default function MyGamesPage() {
-  const router = useRouter()
+  const router = useRouter();
   const [games, setGames] = useState<Game[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchMyGames()
-  }, [])
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
+
+
+
 
   const fetchMyGames = async () => {
     try {
@@ -58,6 +59,19 @@ export default function MyGamesPage() {
       setLoading(false)
     }
   }
+   useEffect(() => {
+    const username = localStorage.getItem("username");
+    const token = localStorage.getItem("Authorization");
+
+    if (!token || !username) {
+      router.push("/auth");
+    } else {
+      setAuthorized(true);
+    }
+       fetchMyGames();
+  }, [router]);
+  
+  if (authorized === null) return null;
 
   const handleDeleteGame = async (gameId: string) => {
     try {
