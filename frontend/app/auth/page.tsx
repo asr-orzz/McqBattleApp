@@ -61,7 +61,7 @@ const handleSignIn = async (e: React.FormEvent) => {
     }
     localStorage.setItem("Authorization", response.token);
     localStorage.setItem("username",response.username);
-    router.push("/dashboard");
+    router.push("/dashboard/mygames");
   } catch (err: any) {
     toastError(err?.response?.data?.msg || "Error in Verifying");
   } finally {

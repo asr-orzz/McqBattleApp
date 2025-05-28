@@ -49,7 +49,7 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href={"/dashboard"}>
+                  <Link href={"/dashboard/mygames"}>
                     <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
                       <Play className="w-4 h-4 mr-2" />
                       Start Battle Now
@@ -304,7 +304,7 @@ export default function HomePage() {
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Link href={"/dashboard"}>
+                <Link href={"/dashboard/mygames"}>
                 <Button size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100">
                   <Play className="w-4 h-4 mr-2" />
                   Start Your First Battle
