@@ -131,6 +131,7 @@ exports.Prisma.GameScalarFieldEnum = {
   id: 'id',
   game: 'game',
   userId: 'userId',
+  createdAt: 'createdAt',
   status: 'status'
 };
 

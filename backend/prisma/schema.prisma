@@ -28,7 +28,7 @@ model Game {
   players    Player[]
   questions  Question[]
   answers    UserAnswer[]
-
+  createdAt  DateTime  @default(now())
   status     GameStatus @default(WAITING)
 }
 
@@ -42,7 +42,7 @@ model Player {
 
   user      User     @relation(fields: [userId], references: [id])
   game      Game     @relation(fields: [gameId], references: [id])
-
+ 
   @@unique([userId, gameId]) 
 }
 
@@ -55,7 +55,7 @@ model Question {
 
   options     Option[]
   answers     UserAnswer[]
-   createdAt  DateTime  @default(now())
+  createdAt  DateTime  @default(now())
 }
 
 model Option {

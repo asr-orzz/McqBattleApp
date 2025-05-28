@@ -28,8 +28,8 @@ model Game {
   players   Player[]
   questions Question[]
   answers   UserAnswer[]
-
-  status GameStatus @default(WAITING)
+  createdAt DateTime     @default(now())
+  status    GameStatus   @default(WAITING)
 }
 
 model Player {
