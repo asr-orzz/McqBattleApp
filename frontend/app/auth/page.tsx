@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Gamepad2, Mail, Lock, User, ArrowLeft, CheckCircle, Loader2 } from "lucide-react"
+import { Gamepad2, Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { toastPromise } from "@/utils/toast"
 import { requestOtp, verifyOtp } from "@/lib/api/auth"
@@ -23,10 +23,10 @@ export default function AuthPage() {
     email: "",
     password: "",
   })
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const signupUsernameRef= useRef<HTMLInputElement>(null);
-  const signupEmailRef=useRef<HTMLInputElement>(null);
-  const signupPasswordRef=useRef<HTMLInputElement>(null);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""])
+  const signupUsernameRef = useRef<HTMLInputElement>(null)
+  const signupEmailRef = useRef<HTMLInputElement>(null)
+  const signupPasswordRef = useRef<HTMLInputElement>(null)
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,49 +38,42 @@ export default function AuthPage() {
   }
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
+    e.preventDefault()
+    setIsLoading(true)
 
-  const username = signupUsernameRef.current?.value;
-  const email = signupEmailRef.current?.value;
-  const password = signupPasswordRef.current?.value;
+    const username = signupUsernameRef.current?.value
+    const email = signupEmailRef.current?.value
+    const password = signupPasswordRef.current?.value
 
-  try {
-    const response = await toastPromise(
-      requestOtp(username!, email!, password!),
-      {
+    try {
+      const response = await toastPromise(requestOtp(username!, email!, password!), {
         success: "OTP Sent",
         error: "There is some error in sending OTP",
         loading: "Sending OTP",
-      }
-    );
+      })
 
-    localStorage.setItem("otpToken",response.token);
+      localStorage.setItem("otpToken", response.token)
 
-    setIsSignUpStep("otp");
-  } catch (err) {
-    console.error("Error during OTP request:", err);
-  } finally {
-    setIsLoading(false);
+      setIsSignUpStep("otp")
+    } catch (err) {
+      console.error("Error during OTP request:", err)
+    } finally {
+      setIsLoading(false)
+    }
   }
-};
-
 
   const handleRequestOtp = async () => {
-      setOtpLoading(true);
-      const username = signupUsernameRef.current?.value;
-      const email = signupEmailRef.current?.value;
-      const password = signupPasswordRef.current?.value;
-      const response = await toastPromise(
-      requestOtp(username!, email!, password!),
-      {
-        success: "OTP Sent",
-        error: "There is some error in sending OTP",
-        loading: "Resending OTP",
-      }
-    );
+    setOtpLoading(true)
+    const username = signupUsernameRef.current?.value
+    const email = signupEmailRef.current?.value
+    const password = signupPasswordRef.current?.value
+    const response = await toastPromise(requestOtp(username!, email!, password!), {
+      success: "OTP Sent",
+      error: "There is some error in sending OTP",
+      loading: "Resending OTP",
+    })
 
-    localStorage.setItem("otpToken",response.token);
+    localStorage.setItem("otpToken", response.token)
     setOtpLoading(false)
   }
 
@@ -88,26 +81,26 @@ export default function AuthPage() {
     e.preventDefault()
     setIsLoading(true)
     // Simulate OTP verification
-    let otpString="";
-    for(let i=0; i<otp.length;i++){
-      otpString = otpString+otp[i];
+    let otpString = ""
+    for (let i = 0; i < otp.length; i++) {
+      otpString = otpString + otp[i]
     }
-    const token= localStorage.getItem("otpToken");
+    const token = localStorage.getItem("otpToken")
     try {
-      await toastPromise(
-      verifyOtp(token!,otpString),
-      {
+      await toastPromise(verifyOtp(token!, otpString), {
         success: "OTP has been Verified",
         error: "There is some error in verifying OTP",
         loading: "Verifying OTP",
-      }
-    );
+      })
     } catch (err) {
-          console.error("Error during OTP request:", err);
+      console.error("Error during OTP request:", err)
     } finally {
-          setIsLoading(false)
-          setIsSignUpStep("success")
-     }
+      setIsLoading(false)
+      setIsSignUpStep("form")
+      setOtp(["", "", "", "", "", ""])
+      const signinTab = document.querySelector('[value="signin"]') as HTMLButtonElement
+      signinTab?.click()
+    }
   }
 
   const handleOtpChange = (index: number, value: string) => {
@@ -145,18 +138,7 @@ export default function AuthPage() {
         </div>
 
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">
-          {isSignUpStep === "success" ? (
-            <CardContent className="p-6">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">Account Created Successfully!</h2>
-                <p className="text-gray-500">Your account has been verified and created. You can now start battling!</p>
-                <Link href={"/auth"}> <Button className="w-full bg-blue-600 hover:bg-blue-700">Sign In</Button></Link>
-              </div>
-            </CardContent>
-          ) : isSignUpStep === "otp" ? (
+          {isSignUpStep === "otp" ? (
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-4">
@@ -349,7 +331,7 @@ export default function AuthPage() {
                     </div>
 
                     <div className="space-y-3">
-                      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading} >
+                      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
                         {isLoading ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
