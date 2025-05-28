@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge"
 import { Gamepad2, Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { toastPromise } from "@/utils/toast"
-import { requestOtp, verifyOtp } from "@/lib/api/auth"
+import { requestOtp, signin, verifyOtp } from "@/lib/api/auth"
+import { useRouter } from "next/navigation"
 
 export default function AuthPage() {
+  const router= useRouter();
   const [isSignUpStep, setIsSignUpStep] = useState<"form" | "otp" | "success">("form")
   const [isLoading, setIsLoading] = useState(false)
   const [otpLoading, setOtpLoading] = useState(false)
@@ -28,13 +30,29 @@ export default function AuthPage() {
   const signupEmailRef = useRef<HTMLInputElement>(null)
   const signupPasswordRef = useRef<HTMLInputElement>(null)
 
+  const signinUsernameRef = useRef<HTMLInputElement>(null)
+  const signinPasswordRef = useRef<HTMLInputElement>(null)
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsLoading(false)
-    // Handle sign in logic here
+    const username= signinUsernameRef.current?.value;
+    const password= signinPasswordRef.current?.value;
+
+    try {
+      const response = await toastPromise(signin(username!, password!), {
+        success: "Signed In Successfully",
+        error: "Try Again Later",
+        loading: "Verifying",
+      })
+      localStorage.setItem("Authorization", response.token);
+    } catch (err) {
+      console.error("Error during OTP request:", err)
+    } finally {
+        setIsLoading(false)
+        localStorage.removeItem("otpToken");
+        router.push("/dashboard");
+    }
   }
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
@@ -80,7 +98,6 @@ export default function AuthPage() {
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate OTP verification
     let otpString = ""
     for (let i = 0; i < otp.length; i++) {
       otpString = otpString + otp[i]
@@ -108,8 +125,6 @@ export default function AuthPage() {
       const newOtp = [...otp]
       newOtp[index] = value
       setOtp(newOtp)
-
-      // Auto-focus next input
       if (value && index < 5) {
         const nextInput = document.getElementById(`otp-${index + 1}`)
         nextInput?.focus()
@@ -235,6 +250,7 @@ export default function AuthPage() {
                           placeholder="Enter your username"
                           className="pl-10"
                           required
+                          ref={signinUsernameRef}
                         />
                       </div>
                     </div>
@@ -249,6 +265,7 @@ export default function AuthPage() {
                           placeholder="Enter your password"
                           className="pl-10"
                           required
+                          ref={signinPasswordRef}
                         />
                       </div>
                     </div>
