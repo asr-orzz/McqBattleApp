@@ -1,8 +1,11 @@
 "use client"
+
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -20,23 +23,21 @@ import { Plus, Play, Trash2, Trophy, Users, Calendar, Gamepad2 } from "lucide-re
 
 interface Game {
   id: string
-  name: string
-  createdBy: string
+  game: string
+  user: {
+    username: string
+  }
+  players: any[]
+  questions: any[]
   createdAt: string
-  participants: number
-  status: "active" | "completed" | "draft"
-  questions: number
+  status: "WAITING" | "ACTIVE" | "COMPLETED"
 }
 
 export default function MyGamesPage() {
   const router = useRouter();
   const [games, setGames] = useState<Game[]>([])
-  const [loading, setLoading] = useState(true);
-
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
-
-
-
+  const [loading, setLoading] = useState(true)
+  const [authorized, setAuthorized] = useState<boolean | null>(null)
 
   const fetchMyGames = async () => {
     try {
@@ -59,19 +60,20 @@ export default function MyGamesPage() {
       setLoading(false)
     }
   }
-   useEffect(() => {
-    const username = localStorage.getItem("username");
-    const token = localStorage.getItem("Authorization");
+
+  useEffect(() => {
+    const username = localStorage.getItem("username")
+    const token = localStorage.getItem("Authorization")
 
     if (!token || !username) {
-      router.push("/auth");
+      router.push("/auth")
     } else {
-      setAuthorized(true);
+      setAuthorized(true)
+      fetchMyGames()
     }
-       fetchMyGames();
-  }, [router]);
-  
-  if (authorized === null) return null;
+  }, [router])
+
+  if (authorized === null) return null
 
   const handleDeleteGame = async (gameId: string) => {
     try {
@@ -103,7 +105,6 @@ export default function MyGamesPage() {
   return (
     <div className="min-h-screen bg-slate-50 pt-6">
       <div className="container mx-auto px-4">
-        {/* Page Title and Create Button */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 flex items-center">
@@ -118,7 +119,6 @@ export default function MyGamesPage() {
           </Button>
         </div>
 
-        {/* Games Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
@@ -158,22 +158,26 @@ export default function MyGamesPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-slate-900 text-lg mb-1 line-clamp-2">{game.name}</CardTitle>
-                      <CardDescription className="text-slate-600">Created by {game.createdBy}</CardDescription>
+                      <CardTitle className="text-slate-900 text-lg mb-1 line-clamp-2">{game.game}</CardTitle>
+                      <CardDescription className="text-slate-600">Created by {game.user.username}</CardDescription>
                     </div>
                     <Badge
                       variant={
-                        game.status === "active" ? "default" : game.status === "completed" ? "secondary" : "outline"
+                        game.status === "ACTIVE"
+                          ? "default"
+                          : game.status === "COMPLETED"
+                            ? "secondary"
+                            : "outline"
                       }
                       className={`ml-2 ${
-                        game.status === "active"
+                        game.status === "ACTIVE"
                           ? "bg-green-100 text-green-800 hover:bg-green-100"
-                          : game.status === "completed"
+                          : game.status === "COMPLETED"
                             ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
                             : "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
                       }`}
                     >
-                      {game.status}
+                      {game.status.toLowerCase()}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -181,11 +185,11 @@ export default function MyGamesPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center text-slate-600">
                       <Users className="w-4 h-4 mr-2 text-slate-500" />
-                      {game.participants} players
+                      {game.players.length} players
                     </div>
                     <div className="flex items-center text-slate-600">
                       <Trophy className="w-4 h-4 mr-2 text-slate-500" />
-                      {game.questions} questions
+                      {game.questions.length} questions
                     </div>
                     <div className="flex items-center text-slate-600 col-span-2">
                       <Calendar className="w-4 h-4 mr-2 text-slate-500" />
@@ -216,7 +220,7 @@ export default function MyGamesPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Game</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete "{game.name}"? This action cannot be undone.
+                            Are you sure you want to delete "{game.game}"? This action cannot be undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
