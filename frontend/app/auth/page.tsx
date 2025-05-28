@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Gamepad2, Mail, Lock, User, ArrowLeft, CheckCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { toastPromise } from "@/utils/toast"
+import { requestOtp, verifyOtp } from "@/lib/api/auth"
 
 export default function AuthPage() {
   const [isSignUpStep, setIsSignUpStep] = useState<"form" | "otp" | "success">("form")
@@ -21,7 +23,10 @@ export default function AuthPage() {
     email: "",
     password: "",
   })
-  const [otp, setOtp] = useState(["", "", "", "", "", ""])
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const signupUsernameRef= useRef<HTMLInputElement>(null);
+  const signupEmailRef=useRef<HTMLInputElement>(null);
+  const signupPasswordRef=useRef<HTMLInputElement>(null);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,18 +38,49 @@ export default function AuthPage() {
   }
 
   const handleSignUpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsLoading(false)
-    setIsSignUpStep("otp")
+  e.preventDefault();
+  setIsLoading(true);
+
+  const username = signupUsernameRef.current?.value;
+  const email = signupEmailRef.current?.value;
+  const password = signupPasswordRef.current?.value;
+
+  try {
+    const response = await toastPromise(
+      requestOtp(username!, email!, password!),
+      {
+        success: "OTP Sent",
+        error: "There is some error in sending OTP",
+        loading: "Sending OTP",
+      }
+    );
+
+    localStorage.setItem("otpToken",response.token);
+
+    setIsSignUpStep("otp");
+  } catch (err) {
+    console.error("Error during OTP request:", err);
+  } finally {
+    setIsLoading(false);
   }
+};
+
 
   const handleRequestOtp = async () => {
-    setOtpLoading(true)
-    // Simulate OTP request
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+      setOtpLoading(true);
+      const username = signupUsernameRef.current?.value;
+      const email = signupEmailRef.current?.value;
+      const password = signupPasswordRef.current?.value;
+      const response = await toastPromise(
+      requestOtp(username!, email!, password!),
+      {
+        success: "OTP Sent",
+        error: "There is some error in sending OTP",
+        loading: "Resending OTP",
+      }
+    );
+
+    localStorage.setItem("otpToken",response.token);
     setOtpLoading(false)
   }
 
@@ -52,9 +88,26 @@ export default function AuthPage() {
     e.preventDefault()
     setIsLoading(true)
     // Simulate OTP verification
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsLoading(false)
-    setIsSignUpStep("success")
+    let otpString="";
+    for(let i=0; i<otp.length;i++){
+      otpString = otpString+otp[i];
+    }
+    const token= localStorage.getItem("otpToken");
+    try {
+      await toastPromise(
+      verifyOtp(token!,otpString),
+      {
+        success: "OTP has been Verified",
+        error: "There is some error in verifying OTP",
+        loading: "Verifying OTP",
+      }
+    );
+    } catch (err) {
+          console.error("Error during OTP request:", err);
+    } finally {
+          setIsLoading(false)
+          setIsSignUpStep("success")
+     }
   }
 
   const handleOtpChange = (index: number, value: string) => {
@@ -100,7 +153,7 @@ export default function AuthPage() {
                 </div>
                 <h2 className="text-xl font-bold text-gray-900">Account Created Successfully!</h2>
                 <p className="text-gray-500">Your account has been verified and created. You can now start battling!</p>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">Start Your First Battle</Button>
+                <Link href={"/auth"}> <Button className="w-full bg-blue-600 hover:bg-blue-700">Sign In</Button></Link>
               </div>
             </CardContent>
           ) : isSignUpStep === "otp" ? (
@@ -259,9 +312,8 @@ export default function AuthPage() {
                           type="text"
                           placeholder="Choose a username"
                           className="pl-10"
-                          value={signUpData.username}
-                          onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
                           required
+                          ref={signupUsernameRef}
                         />
                       </div>
                     </div>
@@ -275,9 +327,8 @@ export default function AuthPage() {
                           type="email"
                           placeholder="Enter your email"
                           className="pl-10"
-                          value={signUpData.email}
-                          onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
                           required
+                          ref={signupEmailRef}
                         />
                       </div>
                     </div>
@@ -291,15 +342,14 @@ export default function AuthPage() {
                           type="password"
                           placeholder="Create a password"
                           className="pl-10"
-                          value={signUpData.password}
-                          onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
                           required
+                          ref={signupPasswordRef}
                         />
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+                      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading} >
                         {isLoading ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
