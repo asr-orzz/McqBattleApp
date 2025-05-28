@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Gamepad2, Mail, Lock, User, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { toastPromise } from "@/utils/toast"
+import { toastError, toastPromise } from "@/utils/toast"
 import { requestOtp, signin, verifyOtp } from "@/lib/api/auth"
 import { useRouter } from "next/navigation"
 
@@ -33,52 +33,80 @@ export default function AuthPage() {
   const signinUsernameRef = useRef<HTMLInputElement>(null)
   const signinPasswordRef = useRef<HTMLInputElement>(null)
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    const username= signinUsernameRef.current?.value;
-    const password= signinPasswordRef.current?.value;
+ 
+const handleSignIn = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      const response = await toastPromise(signin(username!, password!), {
+  const username = signinUsernameRef.current?.value?.trim();
+  const password = signinPasswordRef.current?.value;
+
+  if (!username || !password) {
+    toastError("Please enter both username and password");
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const response = await toastPromise(
+      signin(username, password),
+      {
         success: "Signed In Successfully",
-        error: "Try Again Later",
+        error: "Wrong Credentials",
         loading: "Verifying",
-      })
-      localStorage.setItem("Authorization", response.token);
-    } catch (err) {
-      console.error("Error during OTP request:", err)
-    } finally {
-        setIsLoading(false)
-        localStorage.removeItem("otpToken");
-        router.push("/dashboard");
+      }
+    );
+    if (!response?.token) {
+      throw new Error("Token missing in response");
     }
+    localStorage.setItem("Authorization", response.token);
+    localStorage.setItem("username",response.username);
+    router.push("/dashboard");
+  } catch (err: any) {
+    toastError(err?.response?.data?.msg || "Error in Verifying");
+  } finally {
+    setIsLoading(false);
+    localStorage.removeItem("otpToken");
+  }
+};
+
+const handleSignUpSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+
+  const username = signupUsernameRef.current?.value?.trim();
+  const email = signupEmailRef.current?.value?.trim();
+  const password = signupPasswordRef.current?.value;
+  if (!username || !email || !password) {
+    toastError("Please fill in all fields.");
+    setIsLoading(false);
+    return;
   }
 
-  const handleSignUpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-
-    const username = signupUsernameRef.current?.value
-    const email = signupEmailRef.current?.value
-    const password = signupPasswordRef.current?.value
-
-    try {
-      const response = await toastPromise(requestOtp(username!, email!, password!), {
+  try {
+    const response = await toastPromise(
+      requestOtp(username, email, password), 
+      {
         success: "OTP Sent",
-        error: "There is some error in sending OTP",
-        loading: "Sending OTP",
-      })
+        error: "Error sending OTP",
+        loading: "Sending OTP...",
+      }
+    );
 
-      localStorage.setItem("otpToken", response.token)
-
-      setIsSignUpStep("otp")
-    } catch (err) {
-      console.error("Error during OTP request:", err)
-    } finally {
-      setIsLoading(false)
+    if (!response?.token) {
+      throw new Error("OTP token missing in response");
     }
+
+    localStorage.setItem("otpToken", response.token);
+    setIsSignUpStep("otp");
+  } catch (err: any) {
+    toastError(err?.response?.data?.msg || "Unexpected error occurred.");
+    console.error("Error during OTP request:", err);
+  } finally {
+    setIsLoading(false);
   }
+};
+
 
   const handleRequestOtp = async () => {
     setOtpLoading(true)
@@ -96,29 +124,41 @@ export default function AuthPage() {
   }
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    let otpString = ""
-    for (let i = 0; i < otp.length; i++) {
-      otpString = otpString + otp[i]
-    }
-    const token = localStorage.getItem("otpToken")
-    try {
-      await toastPromise(verifyOtp(token!, otpString), {
-        success: "OTP has been Verified",
-        error: "There is some error in verifying OTP",
-        loading: "Verifying OTP",
-      })
-    } catch (err) {
-      console.error("Error during OTP request:", err)
-    } finally {
-      setIsLoading(false)
-      setIsSignUpStep("form")
-      setOtp(["", "", "", "", "", ""])
-      const signinTab = document.querySelector('[value="signin"]') as HTMLButtonElement
-      signinTab?.click()
-    }
+  e.preventDefault();
+  setIsLoading(true);
+
+  const otpString = otp.join("").trim();
+  const token = localStorage.getItem("otpToken");
+
+  if (!otpString || otpString.length !== 6 || !token) {
+    toastError("Please enter the 6-digit OTP.");
+    setIsLoading(false);
+    return;
   }
+
+  try {
+    await toastPromise(
+      verifyOtp(token, otpString), 
+      {
+        success: "OTP has been Verified",
+        error: "Invalid or expired OTP",
+        loading: "Verifying OTP...",
+      }
+    );
+    setIsSignUpStep("form");
+    setOtp(["", "", "", "", "", ""]);
+    localStorage.removeItem("otpToken");
+
+    const signinTab = document.querySelector('[value="signin"]') as HTMLButtonElement;
+    signinTab?.click();
+  } catch (err: any) {
+    toastError(err?.response?.data?.msg || "Unexpected error during OTP verification.");
+    console.error("Error during OTP verification:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
