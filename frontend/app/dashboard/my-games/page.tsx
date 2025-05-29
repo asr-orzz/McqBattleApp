@@ -96,7 +96,7 @@ const fetchMyGames = async () => {
   }
 
   const handleCreateGame = () => {
-    router.push("/create-game")
+    router.push("/dashboard/create-game")
   }
 
   return (
