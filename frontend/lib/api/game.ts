@@ -1,7 +1,8 @@
+import { headers } from 'next/headers';
 import axios from './axiosInstance';
 
 const authHeader = (token: string) => ({
-  headers: { Authorization: `Bearer ${token}` },
+  headers: { authorization: `Bearer ${token}` },
 });
 
 export const createGame = async (token: string, gameData: any) => {
@@ -30,17 +31,30 @@ export const updateGame = async (token: string, gameId: string, updateData: any)
 };
 
 export const startGame = async (token: string, gameId: string) => {
-  const res = await axios.post('/games/start', { gameId }, authHeader(token));
-  return res.data;
-};
-
-export const getAllGames = async (token: string, userId: string) => {
-  const res = await axios.get('/games', {
-    ...authHeader(token),
-    params: { userId },
+  const res = await axios.post('/games/start', { gameId }, {
+    headers:{
+      Authorization: token
+    },  
   });
   return res.data;
 };
+
+export const getAllGames = async (token: string) => {
+  const res = await axios.post('/games/my-games',{
+    
+  },authHeader(token));
+  return res.data;
+};
+export const deleteGame = async (token: string, gameId: string) => {
+  const res = await axios.delete(`/games/delete/${gameId}`, {
+    ...authHeader(token),
+    data:{
+      
+    }
+  });
+  return res.data;
+};
+
 
 export const getGameById = async (token: string, gameId: string, userId: string) => {
   const res = await axios.get(`/games/${gameId}`, {

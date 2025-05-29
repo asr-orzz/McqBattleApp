@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -19,47 +17,45 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Play, Trash2, Trophy, Users, Calendar, Gamepad2 } from "lucide-react"
+import { Plus, Play, Trash2, Trophy, Users, Gamepad2 } from "lucide-react"
+import { deleteGame, getAllGames } from "@/lib/api/game"
+import { toastPromise } from "@/utils/toast"
 
 interface Game {
   id: string
   game: string
-  user: {
-    username: string
-  }
+  userId: string
   players: any[]
   questions: any[]
+  answers: any[]
   createdAt: string
   status: "WAITING" | "ACTIVE" | "COMPLETED"
 }
 
 export default function MyGamesPage() {
-  const router = useRouter();
+  const router = useRouter()
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState<boolean | null>(null)
+const fetchMyGames = async () => {
+  setLoading(true);
 
-  const fetchMyGames = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch("/api/my-games", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setGames(data.games || [])
-      } else {
-        console.error("Failed to fetch games")
-      }
-    } catch (error) {
-      console.error("Error fetching games:", error)
-    } finally {
-      setLoading(false)
+  try {
+    const token = localStorage.getItem("Authorization");
+    if (!token) {
+      console.error("No authorization token found.");
+      return;
     }
+
+    const response = await getAllGames(token);
+    const data = response.games;
+    setGames(data || []);
+  } catch (error) {
+    console.error("Error fetching games:", error);
+  } finally {
+    setLoading(false);
   }
+};
 
   useEffect(() => {
     const username = localStorage.getItem("username")
@@ -75,24 +71,25 @@ export default function MyGamesPage() {
 
   if (authorized === null) return null
 
-  const handleDeleteGame = async (gameId: string) => {
-    try {
-      const response = await fetch(`/api/games/${gameId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (response.ok) {
-        setGames(games.filter((game) => game.id !== gameId))
-      } else {
-        console.error("Failed to delete game")
-      }
-    } catch (error) {
-      console.error("Error deleting game:", error)
+ const handleDeleteGame = async (gameId: string) => {
+  try {
+    const token = localStorage.getItem("Authorization");
+    if (!token) {
+      throw new Error("Authorization token not found");
     }
+
+    const response = await toastPromise( deleteGame(token, gameId),{
+      success:"Game Deleted",
+      loading: "Deleting Game",
+      error: "There is some error in deleting game"
+    });
+
+    setGames((prevGames) => prevGames.filter((game) => game.id !== gameId));
+  } catch (error) {
+    console.error("Error deleting game:", error);
   }
+};
+
 
   const handleStartGame = (gameId: string) => {
     router.push(`/game/${gameId}`)
@@ -159,15 +156,13 @@ export default function MyGamesPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-slate-900 text-lg mb-1 line-clamp-2">{game.game}</CardTitle>
-                      <CardDescription className="text-slate-600">Created by {game.user.username}</CardDescription>
+                      <CardDescription className="text-slate-600">
+                        Created on {new Date(game.createdAt).toLocaleDateString()}
+                      </CardDescription>
                     </div>
                     <Badge
                       variant={
-                        game.status === "ACTIVE"
-                          ? "default"
-                          : game.status === "COMPLETED"
-                            ? "secondary"
-                            : "outline"
+                        game.status === "ACTIVE" ? "default" : game.status === "COMPLETED" ? "secondary" : "outline"
                       }
                       className={`ml-2 ${
                         game.status === "ACTIVE"
@@ -190,10 +185,6 @@ export default function MyGamesPage() {
                     <div className="flex items-center text-slate-600">
                       <Trophy className="w-4 h-4 mr-2 text-slate-500" />
                       {game.questions.length} questions
-                    </div>
-                    <div className="flex items-center text-slate-600 col-span-2">
-                      <Calendar className="w-4 h-4 mr-2 text-slate-500" />
-                      {new Date(game.createdAt).toLocaleDateString()}
                     </div>
                   </div>
 

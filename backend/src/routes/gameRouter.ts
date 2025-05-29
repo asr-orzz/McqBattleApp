@@ -145,3 +145,92 @@ gameRouter.post("/accept-request", userMiddleware, async (req, res) => {
     return
   }
 });
+
+gameRouter.post("/my-games", userMiddleware, async (req, res) => {
+  try {
+    const userId = req.body.userId;
+
+    const myGames = await prisma.game.findMany({
+      where: {
+        userId, 
+      },
+      include: {
+        players: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+        questions: {
+          select: {
+            id: true,
+            question: true,
+          },
+        },
+        answers: {
+          select: {
+            id: true,
+            userId: true,
+            questionId: true,
+            optionId: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.status(200).json({ games: myGames });
+  } catch (error) {
+    console.error("Error fetching my games:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+gameRouter.delete("/delete/:gameId", userMiddleware, async (req, res) => {
+  const gameId = req.params.gameId;
+  const userId = req.body.userId; 
+
+  if (!gameId || !userId) {
+     res.status(400).json({ error: "Missing gameId or userId" });
+     return
+  }
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+       res.status(404).json({ error: "Game not found" });
+       return
+    }
+
+    if (game.userId !== userId) {
+       res.status(403).json({ error: "Only the game creator can delete this game" });
+       return
+    }
+
+    await prisma.player.deleteMany({ where: { gameId } });
+    await prisma.userAnswer.deleteMany({ where: { gameId } });
+    await prisma.question.deleteMany({ where: { gameId } });
+
+    await prisma.game.delete({
+      where: { id: gameId },
+    });
+
+    await pusher.trigger("games", "game-deleted", { gameId });
+
+     res.status(200).json({ message: "Game deleted successfully" });
+     return
+  } catch (error) {
+    console.error("Error deleting game:", error);
+     res.status(500).json({ error: "Internal server error" });
+     return
+  }
+});

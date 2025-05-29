@@ -59,9 +59,9 @@ const handleSignIn = async (e: React.FormEvent) => {
     if (!response?.token) {
       throw new Error("Token missing in response");
     }
-    localStorage.setItem("Authorization", response.token);
+    localStorage.setItem("Authorization",response.token);
     localStorage.setItem("username",response.username);
-    router.push("/dashboard/mygames");
+    router.push("/dashboard/my-games");
   } catch (err: any) {
     toastError(err?.response?.data?.msg || "Error in Verifying");
   } finally {
