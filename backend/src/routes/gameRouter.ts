@@ -235,3 +235,73 @@ gameRouter.delete("/delete/:gameId", userMiddleware, async (req, res) => {
      return
   }
 });
+
+gameRouter.get("/:gameId", userMiddleware, async (req, res) => {
+  const { gameId } = req.params;
+  const userId = req.body.userId;
+
+  if (!gameId || !userId) {
+    res.status(400).json({ error: "Missing gameId or userId" });
+    return
+  }
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        user: { 
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+        players: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+        questions: {
+          include: {
+            options: {
+              select: {
+                id: true,
+                option: true,
+                isCorrect: true,
+              },
+            },
+          },
+        },
+        answers: {
+          select: {
+            id: true,
+            userId: true,
+            questionId: true,
+            optionId: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    if (!game) {
+       res.status(404).json({ error: "Game not found" });
+       return
+    }
+
+    if (game.user.id !== userId) {
+       res.status(403).json({ error: "Only the game creator can view this game" });
+       return
+    }
+
+    res.status(200).json({ game });
+  } catch (error) {
+    console.error("Error fetching game details:", error);
+    res.status(500).json({ error: "Internal server error" });
+    return
+  }
+});
