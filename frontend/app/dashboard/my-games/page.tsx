@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Play, Trash2, Trophy, Users, Gamepad2 } from "lucide-react"
+import { Plus, Play, Trash2, Trophy, Users, Gamepad2, Edit } from "lucide-react"
 import { deleteGame, getAllGames } from "@/lib/api/game"
 import { toastPromise } from "@/utils/toast"
 
@@ -37,25 +37,25 @@ export default function MyGamesPage() {
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState<boolean | null>(null)
-const fetchMyGames = async () => {
-  setLoading(true);
+  const fetchMyGames = async () => {
+    setLoading(true)
 
-  try {
-    const token = localStorage.getItem("Authorization");
-    if (!token) {
-      console.error("No authorization token found.");
-      return;
+    try {
+      const token = localStorage.getItem("Authorization")
+      if (!token) {
+        console.error("No authorization token found.")
+        return
+      }
+
+      const response = await getAllGames(token)
+      const data = response.games
+      setGames(data || [])
+    } catch (error) {
+      console.error("Error fetching games:", error)
+    } finally {
+      setLoading(false)
     }
-
-    const response = await getAllGames(token);
-    const data = response.games;
-    setGames(data || []);
-  } catch (error) {
-    console.error("Error fetching games:", error);
-  } finally {
-    setLoading(false);
   }
-};
 
   useEffect(() => {
     const username = localStorage.getItem("username")
@@ -71,28 +71,31 @@ const fetchMyGames = async () => {
 
   if (authorized === null) return null
 
- const handleDeleteGame = async (gameId: string) => {
-  try {
-    const token = localStorage.getItem("Authorization");
-    if (!token) {
-      throw new Error("Authorization token not found");
+  const handleDeleteGame = async (gameId: string) => {
+    try {
+      const token = localStorage.getItem("Authorization")
+      if (!token) {
+        throw new Error("Authorization token not found")
+      }
+
+      const response = await toastPromise(deleteGame(token, gameId), {
+        success: "Game Deleted",
+        loading: "Deleting Game",
+        error: "There is some error in deleting game",
+      })
+
+      setGames((prevGames) => prevGames.filter((game) => game.id !== gameId))
+    } catch (error) {
+      console.error("Error deleting game:", error)
     }
-
-    const response = await toastPromise( deleteGame(token, gameId),{
-      success:"Game Deleted",
-      loading: "Deleting Game",
-      error: "There is some error in deleting game"
-    });
-
-    setGames((prevGames) => prevGames.filter((game) => game.id !== gameId));
-  } catch (error) {
-    console.error("Error deleting game:", error);
   }
-};
-
 
   const handleStartGame = (gameId: string) => {
     router.push(`/game/${gameId}`)
+  }
+
+  const handleEditGame = (gameId: string) => {
+    router.push(`/dashboard/edit-games/${gameId}`)
   }
 
   const handleCreateGame = () => {
@@ -195,6 +198,15 @@ const fetchMyGames = async () => {
                     >
                       <Play className="w-4 h-4 mr-2" />
                       Start Game
+                    </Button>
+
+                    <Button
+                      onClick={() => handleEditGame(game.id)}
+                      variant="outline"
+                      size="icon"
+                      className="border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                    >
+                      <Edit className="w-4 h-4" />
                     </Button>
 
                     <AlertDialog>
