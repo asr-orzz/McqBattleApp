@@ -236,7 +236,7 @@ gameRouter.delete("/delete/:gameId", userMiddleware, async (req, res) => {
   }
 });
 
-gameRouter.get("/:gameId", userMiddleware, async (req, res) => {
+gameRouter.post("/:gameId", userMiddleware, async (req, res) => {
   const { gameId } = req.params;
   const userId = req.body.userId;
 

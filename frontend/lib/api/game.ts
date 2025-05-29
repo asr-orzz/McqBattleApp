@@ -58,10 +58,9 @@ export const deleteGame = async (token: string, gameId: string) => {
 };
 
 
-export const getGameById = async (token: string, gameId: string, userId: string) => {
-  const res = await axios.get(`/games/${gameId}`, {
-    ...authHeader(token),
-    params: { userId },
-  });
+export const getGameById = async (token: string, gameId: string) => {
+  const res = await axios.post(`/games/${gameId}`, {
+    
+  },authHeader(token));
   return res.data;
 };

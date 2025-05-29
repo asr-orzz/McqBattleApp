@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Plus, Trash2, Save, ArrowLeft, HelpCircle, Edit } from "lucide-react"
 import { toastError, toastSuccess, toastWarning, toastPromise } from "@/utils/toast"
+import { getGameById } from "@/lib/api/game"
 
 interface Option {
   id: string
@@ -66,23 +67,18 @@ export default function EditGamePage() {
   const fetchGameData = async () => {
     try {
       setLoading(true)
+      const token = localStorage.getItem("Authorization")
+      // Fetch game details (which already includes questions and options)
+      const gameResponse = await getGameById(token!, gameId)
+      const gameData = gameResponse;
 
-      // Fetch game details
-      const gameResponse = await fetch(`/api/games/${gameId}`)
-      if (!gameResponse.ok) {
-        throw new Error("Failed to fetch game")
-      }
-      const gameData = await gameResponse.json()
-      setGame(gameData)
-      setGameName(gameData.game)
+      // Set game data
+      console.log(gameData);
+      setGame(gameData.game.game)
+      setGameName(gameData.game.game)
 
-      // Fetch questions
-      const questionsResponse = await fetch(`/api/questions?gameId=${gameId}`)
-      if (!questionsResponse.ok) {
-        throw new Error("Failed to fetch questions")
-      }
-      const questionsData = await questionsResponse.json()
-      setQuestions(questionsData)
+      // // Set questions from the game response (no separate API call needed)
+      setQuestions(gameData.game.questions || [])
     } catch (error) {
       console.error("Error fetching game data:", error)
       toastError("Failed to load game data")
