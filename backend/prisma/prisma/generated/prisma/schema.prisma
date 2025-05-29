@@ -28,8 +28,9 @@ model Game {
   players   Player[]
   questions Question[]
   answers   UserAnswer[]
-  createdAt DateTime     @default(now())
-  status    GameStatus   @default(WAITING)
+
+  createdAt DateTime   @default(now())
+  status    GameStatus @default(WAITING)
 }
 
 model Player {
@@ -40,7 +41,7 @@ model Player {
   score    Int      @default(0)
 
   user User @relation(fields: [userId], references: [id])
-  game Game @relation(fields: [gameId], references: [id])
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([userId, gameId])
 }
@@ -50,11 +51,12 @@ model Question {
   question    String
   explanation String
   gameId      String
-  game        Game   @relation(fields: [gameId], references: [id])
+  game        Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
-  options   Option[]
-  answers   UserAnswer[]
-  createdAt DateTime     @default(now())
+  options Option[]
+  answers UserAnswer[]
+
+  createdAt DateTime @default(now())
 }
 
 model Option {
@@ -62,7 +64,7 @@ model Option {
   option     String
   isCorrect  Boolean
   questionId String
-  question   Question @relation(fields: [questionId], references: [id])
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   answers UserAnswer[]
 }
@@ -75,10 +77,10 @@ model UserAnswer {
   optionId   String
   createdAt  DateTime @default(now())
 
-  user     User     @relation(fields: [userId], references: [id])
-  game     Game     @relation(fields: [gameId], references: [id])
-  question Question @relation(fields: [questionId], references: [id])
-  option   Option   @relation(fields: [optionId], references: [id])
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game     Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  option   Option   @relation(fields: [optionId], references: [id], onDelete: Cascade)
 }
 
 enum GameStatus {

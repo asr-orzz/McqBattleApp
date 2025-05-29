@@ -216,6 +216,7 @@ gameRouter.delete("/delete/:gameId", userMiddleware, async (req, res) => {
        return
     }
 
+
     await prisma.player.deleteMany({ where: { gameId } });
     await prisma.userAnswer.deleteMany({ where: { gameId } });
     await prisma.question.deleteMany({ where: { gameId } });

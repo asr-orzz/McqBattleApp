@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Slide } from "react-toastify";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,9 @@ import { Plus, Trash2, Save, ArrowLeft, HelpCircle } from "lucide-react"
 import { toastError, toastWarning, toastPromise } from "@/utils/toast"
 import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+import { createGame } from "@/lib/api/game"
+import { createQuestion } from "@/lib/api/question"
+import { createOption } from "@/lib/api/option"
 
 interface Option {
   id: string
@@ -137,8 +141,6 @@ export default function CreateGamePage() {
       toastError("Please add at least one question")
       return false
     }
-
-    // Validate questions
     for (const [index, question] of questions.entries()) {
       if (!question.question.trim()) {
         toastError(`Question ${index + 1} is empty. Please fill in all question fields.`)
@@ -171,100 +173,86 @@ export default function CreateGamePage() {
     return true
   }
 
-  const handleSaveGame = async () => {
-    if (!validateForm()) return
+const handleSaveGame = async () => {
+  if (!validateForm()) return;
 
-    setLoading(true)
+  setLoading(true);
 
-    try {
-      // Create the game and all questions/options in sequence
-      await toastPromise(
-        (async () => {
-          // Step 1: Create the game
-          const gameResponse = await fetch("/api/games", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              game: gameName,
-            }),
-          })
+  try {
+    await toastPromise(
+      (async () => {
+        const token = localStorage.getItem("Authorization");
+        if (!token) throw new Error("No authorization token found");
 
-          if (!gameResponse.ok) {
-            throw new Error("Failed to create game")
+        // Step 1: Create the game
+        const createdGame = await createGame(token, gameName);
+        const gameId = createdGame.id;
+
+        // Step 2: Create questions and options
+        for (const question of questions) {
+          const createdQuestion = await createQuestion(token, {
+            question: question.question,
+            explanation: question.explanation,
+            gameId,
+          });
+
+          const questionId = createdQuestion.id;
+
+          // Step 3: Create options for this question
+          for (const option of question.options) {
+            await createOption(token, {
+              option: option.option,
+              isCorrect: option.isCorrect,
+              questionId,
+              gameId,
+            });
           }
+        }
 
-          const gameData = await gameResponse.json()
-          const gameId = gameData.id
+        console.log("Game, questions, and options created successfully.");
+      })(),
+      {
+        loading: "Creating your game...",
+        success: "Game created successfully!",
+        error: (err) => `Error: ${err.message || "Failed to create game"}`,
+      }
+    );
 
-          // Step 2: Create questions and options
-          for (const question of questions) {
-            // Create question
-            const questionResponse = await fetch("/api/question/create", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                question: question.question,
-                explanation: question.explanation,
-                gameId: gameId,
-              }),
-            })
-
-            if (!questionResponse.ok) {
-              throw new Error("Failed to create question")
-            }
-
-            const questionData = await questionResponse.json()
-            const questionId = questionData.id
-
-            // Create options for this question
-            for (const option of question.options) {
-              const optionResponse = await fetch("/api/option/create", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  option: option.option,
-                  isCorrect: option.isCorrect,
-                  questionId: questionId,
-                  gameId: gameId,
-                }),
-              })
-
-              if (!optionResponse.ok) {
-                throw new Error("Failed to create option")
-              }
-            }
-          }
-
-          return gameData
-        })(),
-        {
-          loading: "Creating your game...",
-          success: "Game created successfully!",
-          error: (err) => `Error: ${err.message || "Failed to create game"}`,
-        },
-      )
-
-      // Navigate to My Games page after successful creation
-      setTimeout(() => {
-        router.push("/my-games")
-      }, 1000)
-    } catch (error) {
-      console.error("Error creating game:", error)
-      toastError(error instanceof Error ? error.message : "An unknown error occurred")
-    } finally {
-      setLoading(false)
-    }
+    // Redirect after a short delay
+    setTimeout(() => {
+      router.push("/dashboard/my-games");
+    }, 1000);
+  } catch (error) {
+    console.error("Error creating game:", error);
+    toastError(error instanceof Error ? error.message : "An unknown error occurred");
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <div className="min-h-screen bg-slate-50 pt-6">
-      <ToastContainer />
+      <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick={true}
+          rtl={false}
+          pauseOnFocusLoss={true}
+          draggable={true}
+          pauseOnHover={true}
+          theme="light"
+          transition={Slide}
+          limit={3}
+          toastClassName="!bg-white !text-gray-900 !rounded-lg !shadow-lg !border !border-gray-200"
+          progressClassName="!bg-blue-500"
+          closeButton={true}
+          style={{
+            fontSize: "14px",
+            fontFamily: "system-ui, -apple-system, sans-serif",
+          }}
+        />
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

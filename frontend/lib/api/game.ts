@@ -6,7 +6,9 @@ const authHeader = (token: string) => ({
 });
 
 export const createGame = async (token: string, gameData: any) => {
-  const res = await axios.post('/games/create', gameData, authHeader(token));
+  const res = await axios.post('/games/create', {
+    game : gameData
+  }, authHeader(token));
   return res.data;
 };
 
