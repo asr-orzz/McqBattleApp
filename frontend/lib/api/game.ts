@@ -1,4 +1,3 @@
-import { headers } from 'next/headers';
 import axios from './axiosInstance';
 
 const authHeader = (token: string) => ({
