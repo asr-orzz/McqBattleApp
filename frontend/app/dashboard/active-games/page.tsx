@@ -53,11 +53,7 @@ export default function ActiveGamesPage() {
 
       const response = await getAllGames();
 
-    //   if (!response.ok) {
-    //     throw new Error("Failed to fetch active games")
-    //   }
-
-      const data = await response;
+      const data = await response
       // API returns array directly, not wrapped in games property
       setGames(data || [])
     } catch (error) {
@@ -112,6 +108,11 @@ export default function ActiveGamesPage() {
           return prevGames
         })
       }
+    })
+
+    // Add listener for game deletion
+    channel.bind("game-deleted", (deletedGameEvent: { gameId: string }) => {
+      setGames((prevGames) => prevGames.filter((game) => game.id !== deletedGameEvent.gameId))
     })
 
     // Clean up subscription on unmount
