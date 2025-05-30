@@ -43,10 +43,14 @@ export const startGame = async (token: string, gameId: string) => {
   return res.data;
 };
 
-export const getAllGames = async (token: string) => {
+export const getAllMyGames = async (token: string) => {
   const res = await axios.post('/games/my-games',{
     
   },authHeader(token));
+  return res.data;
+};
+export const getAllGames = async () => {
+  const res = await axios.get('/games');
   return res.data;
 };
 export const deleteGame = async (token: string, gameId: string) => {
@@ -62,7 +66,7 @@ export const deleteGame = async (token: string, gameId: string) => {
 
 export const getGameById = async (token: string, gameId: string) => {
   const res = await axios.post(`/games/${gameId}`, {
-    
+    gameId
   },authHeader(token));
   return res.data;
 };

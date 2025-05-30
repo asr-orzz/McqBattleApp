@@ -18,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Plus, Play, Trash2, Trophy, Users, Gamepad2, Edit } from "lucide-react"
-import { deleteGame, getAllGames } from "@/lib/api/game"
+import { deleteGame, getAllMyGames } from "@/lib/api/game"
 import { toastPromise } from "@/utils/toast"
 
 interface Game {
@@ -47,7 +47,7 @@ export default function MyGamesPage() {
         return
       }
 
-      const response = await getAllGames(token)
+      const response = await getAllMyGames(token)
       const data = response.games
       setGames(data || [])
     } catch (error) {
