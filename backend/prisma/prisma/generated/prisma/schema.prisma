@@ -17,7 +17,7 @@ model User {
   games    Game[]          @relation("CreatorGames")
   players  Player[]
   answers  UserAnswer[]
-  requests PlayerRequest[] // Relation to PlayerRequest
+  requests PlayerRequest[] 
 }
 
 model Game {
@@ -29,7 +29,7 @@ model Game {
   players   Player[]
   questions Question[]
   answers   UserAnswer[]
-  requests  PlayerRequest[] // Relation to PlayerRequest
+  requests  PlayerRequest[] 
 
   createdAt DateTime   @default(now())
   status    GameStatus @default(WAITING)
