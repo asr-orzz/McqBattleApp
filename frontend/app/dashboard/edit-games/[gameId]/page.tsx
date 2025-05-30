@@ -50,7 +50,6 @@ interface Game {
 }
 
 export default function EditGamePage() {
-  const token = localStorage.getItem("Authorization");
   const router = useRouter()
   const params = useParams()
   const gameId = params.gameId as string
@@ -68,6 +67,7 @@ export default function EditGamePage() {
   }, [gameId])
 
   const fetchGameData = async () => {
+    const token = localStorage.getItem("Authorization");
     try {
       setLoading(true)
       // Fetch game details (which already includes questions and options)
@@ -106,7 +106,7 @@ export default function EditGamePage() {
     setQuestions([...questions, newQuestion])
   }
 const removeQuestion = async (questionId: string) => {
-
+  const token =localStorage.getItem("Authorization");
   if (!token) {
     toastError("Unauthorized: Please log in again.");
     return;
@@ -118,7 +118,8 @@ const removeQuestion = async (questionId: string) => {
   } else {
     try {
       // Call your API
-      await deleteQuestion(token, questionId);
+      const token = localStorage.getItem("Authorization");
+      await deleteQuestion(token!, questionId);
       // If successful, update UI
       setQuestions((prev) => prev.filter((q) => q.id !== questionId));
       toastSuccess("Question deleted successfully");
@@ -202,6 +203,7 @@ const removeQuestion = async (questionId: string) => {
         ),
       )
     } else {
+      const token = localStorage.getItem("Authorization");
       // Delete existing option
       try {
         await deleteOption(token!,optionId);
@@ -269,6 +271,7 @@ const removeQuestion = async (questionId: string) => {
   if (!validateForm()) return;
 
   setSaving(true);
+  const token = localStorage.getItem("Authorization");
 
   const saveGamePromise = async () => {
     try {

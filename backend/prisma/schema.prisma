@@ -23,7 +23,7 @@ model Game {
   id         String     @id @default(uuid())
   game       String
   userId     String
-  user       User       @relation("CreatorGames", fields: [userId], references: [id])
+  user       User       @relation("CreatorGames", fields: [userId], references: [id], onDelete: Cascade)
 
   players    Player[]
   questions  Question[]
