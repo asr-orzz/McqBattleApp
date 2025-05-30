@@ -167,6 +167,15 @@ exports.Prisma.UserAnswerScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.PlayerRequestScalarFieldEnum = {
+  id: 'id',
+  gameId: 'gameId',
+  userId: 'userId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -182,13 +191,21 @@ exports.GameStatus = exports.$Enums.GameStatus = {
   COMPLETED: 'COMPLETED'
 };
 
+exports.RequestStatus = exports.$Enums.RequestStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   Game: 'Game',
   Player: 'Player',
   Question: 'Question',
   Option: 'Option',
-  UserAnswer: 'UserAnswer'
+  UserAnswer: 'UserAnswer',
+  PlayerRequest: 'PlayerRequest'
 };
 
 /**

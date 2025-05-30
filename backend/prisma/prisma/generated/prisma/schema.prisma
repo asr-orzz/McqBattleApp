@@ -14,9 +14,10 @@ model User {
   email    String @unique
   password String
 
-  games   Game[]       @relation("CreatorGames")
-  players Player[]
-  answers UserAnswer[]
+  games    Game[]          @relation("CreatorGames")
+  players  Player[]
+  answers  UserAnswer[]
+  requests PlayerRequest[] // Relation to PlayerRequest
 }
 
 model Game {
@@ -28,6 +29,7 @@ model Game {
   players   Player[]
   questions Question[]
   answers   UserAnswer[]
+  requests  PlayerRequest[] // Relation to PlayerRequest
 
   createdAt DateTime   @default(now())
   status    GameStatus @default(WAITING)
@@ -83,8 +85,29 @@ model UserAnswer {
   option   Option   @relation(fields: [optionId], references: [id], onDelete: Cascade)
 }
 
+model PlayerRequest {
+  id        String        @id @default(uuid())
+  gameId    String
+  userId    String
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+}
+
 enum GameStatus {
   WAITING
   STARTED
   COMPLETED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
