@@ -32,14 +32,19 @@ export default function Navbar() {
       </Link>
 
       {/* Navigation Links */}
-      <nav className="ml-8 flex gap-1">
+      <nav className="ml-1 flex gap-3">
         <Link href="/dashboard/my-games">
           <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50 font-medium px-4 py-2">
             <Trophy className="w-4 h-4 mr-2" />
             My Games
           </Button>
         </Link>
-
+        <Link href="/dashboard/my-requests">
+          <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50 font-medium px-4 py-2">
+            <Users className="w-4 h-4 mr-2" />
+            My Requests
+          </Button>
+        </Link>
         <Link href="/dashboard/active-games">
           <Button variant="ghost" className="text-slate-700 hover:text-blue-600 hover:bg-blue-50 font-medium px-4 py-2">
             <Zap className="w-4 h-4 mr-2" />
