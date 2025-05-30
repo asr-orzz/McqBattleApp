@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Plus, Trash2, Save, ArrowLeft, HelpCircle, Edit } from "lucide-react"
 import { toastError, toastSuccess, toastWarning, toastPromise } from "@/utils/toast"
-import { getGameById } from "@/lib/api/game"
+import { getGameById, updateGame } from "@/lib/api/game"
 
 interface Option {
   id: string
@@ -269,21 +269,10 @@ export default function EditGamePage() {
     setSaving(true)
 
     const saveGamePromise = async () => {
+      const token= localStorage.getItem("Authorization");
       // Step 1: Update game name if changed
       if (game && gameName !== game.game) {
-        const gameResponse = await fetch(`/api/games/${gameId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            game: gameName,
-          }),
-        })
-
-        if (!gameResponse.ok) {
-          throw new Error("Failed to update game")
-        }
+        const gameResponse = await updateGame(token!,gameId);
       }
 
       // Step 2: Process questions

@@ -305,3 +305,43 @@ gameRouter.post("/:gameId", userMiddleware, async (req, res) => {
     return
   }
 });
+gameRouter.patch("/games/:gameId/name", userMiddleware, async (req, res) => {
+  const { gameId } = req.params;
+  const { userId, newName } = req.body;
+
+  if (!newName || !userId) {
+    res.status(400).json({ error: "Missing newName or userId" });
+    return;
+  }
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+      res.status(404).json({ error: "Game not found" });
+      return;
+    }
+
+    if (game.userId !== userId) {
+      res.status(403).json({ error: "Only the game creator can update the name" });
+      return;
+    }
+
+    const updatedGame = await prisma.game.update({
+      where: { id: gameId },
+      data: { game: newName },
+    });
+
+    await pusher.trigger("games", "game-name-updated", {
+      gameId: updatedGame.id,
+      newName: updatedGame.game,
+    });
+
+    res.status(200).json({ message: "Game name updated successfully", updatedGame });
+  } catch (error) {
+    console.error("Error updating game name:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
