@@ -305,7 +305,7 @@ gameRouter.post("/:gameId", userMiddleware, async (req, res) => {
     return
   }
 });
-gameRouter.patch("/games/:gameId/name", userMiddleware, async (req, res) => {
+gameRouter.put("/:gameId", userMiddleware, async (req, res) => {
   const { gameId } = req.params;
   const { userId, newName } = req.body;
 

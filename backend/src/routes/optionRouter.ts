@@ -93,22 +93,8 @@ optionRouter.put("/:id", async (req, res) => {
   }
 });
 
-optionRouter.delete("/:id", async (req, res) => {
-  const { id } = req.params;
 
-  try {
-    await prisma.option.delete({
-      where: { id },
-    });
-
-    res.json({ message: "Option deleted successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete option" });
-  }
-});
-
-optionRouter.delete("/:id", async (req, res) => {
+optionRouter.post("/delete/:id", async (req, res) => {
   const { id } = req.params;
   const userId = req.body.userId;
 

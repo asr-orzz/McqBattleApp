@@ -124,7 +124,7 @@ questionRouter.put("/:id", userMiddleware, async (req, res) => {
   }
 });
 
-questionRouter.delete("/:id", userMiddleware, async (req, res) => {
+questionRouter.post("/delete/:id", userMiddleware, async (req, res) => {
   const { id } = req.params;
   const userId = req.body.userId;
 

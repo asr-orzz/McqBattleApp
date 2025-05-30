@@ -16,17 +16,20 @@ export const getQuestions = async (token: string, gameId: string, userId: string
   return res.data;
 };
 
-export const updateQuestion = async (token: string, id: string, data: any) => {
+export const UpdateQuestion = async (token: string, id: string, data: {
+  question: string,
+  explanation: string
+}) => {
   const res = await axios.put(`/questions/${id}`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
 };
 
-export const deleteQuestion = async (token: string, id: string, userId: string) => {
-  const res = await axios.delete(`/questions/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    data: { userId },
+export const deleteQuestion = async (token: string, id: string) => {
+  const res = await axios.post(`/questions/delete/${id}`, {
+  },{
+    headers: { Authorization: `Bearer ${token}` }
   });
   return res.data;
 };

@@ -27,9 +27,9 @@ export const acceptPlayer = async (token: string, gameId: string, playerId: stri
   return res.data;
 };
 
-export const updateGame = async (token: string, gameId: string) => {
+export const updateGame = async (token: string, gameId: string,newName: string) => {
   const res = await axios.put(`/games/${gameId}`,{
-    gameId: gameId
+    newName: newName
   }, authHeader(token));
   return res.data;
 };

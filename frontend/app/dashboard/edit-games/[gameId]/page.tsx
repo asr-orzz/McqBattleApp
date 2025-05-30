@@ -22,6 +22,8 @@ import {
 import { Plus, Trash2, Save, ArrowLeft, HelpCircle, Edit } from "lucide-react"
 import { toastError, toastSuccess, toastWarning, toastPromise } from "@/utils/toast"
 import { getGameById, updateGame } from "@/lib/api/game"
+import { createQuestion,deleteQuestion,UpdateQuestion } from "@/lib/api/question"
+import { createOption, deleteOption, UpdateOption } from "@/lib/api/option"
 
 interface Option {
   id: string
@@ -48,6 +50,7 @@ interface Game {
 }
 
 export default function EditGamePage() {
+  const token = localStorage.getItem("Authorization");
   const router = useRouter()
   const params = useParams()
   const gameId = params.gameId as string
@@ -67,13 +70,12 @@ export default function EditGamePage() {
   const fetchGameData = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem("Authorization")
       // Fetch game details (which already includes questions and options)
       const gameResponse = await getGameById(token!, gameId)
       const gameData = gameResponse;
 
       // Set game data
-      console.log(gameData);
+
       setGame(gameData.game.game)
       setGameName(gameData.game.game)
 
@@ -103,28 +105,34 @@ export default function EditGamePage() {
     }
     setQuestions([...questions, newQuestion])
   }
+const removeQuestion = async (questionId: string) => {
 
-  const removeQuestion = async (questionId: string) => {
-    if (questionId.startsWith("temp_")) {
-      // Remove temporary question
-      setQuestions(questions.filter((q) => q.id !== questionId))
-    } else {
-      // Delete existing question
-      try {
-        const response = await fetch(`/api/questions/${questionId}`, {
-          method: "DELETE",
-        })
-        if (response.ok) {
-          setQuestions(questions.filter((q) => q.id !== questionId))
-          toastSuccess("Question deleted successfully")
-        } else {
-          toastError("Failed to delete question")
-        }
-      } catch (error) {
-        toastError("Error deleting question")
-      }
+  if (!token) {
+    toastError("Unauthorized: Please log in again.");
+    return;
+  }
+
+  if (questionId.startsWith("temp_")) {
+    // Remove temporary question
+    setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+  } else {
+    try {
+      // Call your API
+      await deleteQuestion(token, questionId);
+      // If successful, update UI
+      setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+      toastSuccess("Question deleted successfully");
+    } catch (error: any) {
+      console.error("Delete error:", error);
+
+      const errorMessage =
+        error?.response?.data?.message || error?.message || "Error deleting question";
+      toastError(errorMessage);
     }
   }
+};
+
+
 
   const updateQuestion = (questionId: string, field: string, value: string) => {
     setQuestions(questions.map((q) => (q.id === questionId ? { ...q, [field]: value } : q)))
@@ -196,10 +204,7 @@ export default function EditGamePage() {
     } else {
       // Delete existing option
       try {
-        const response = await fetch(`/api/options/${optionId}`, {
-          method: "DELETE",
-        })
-        if (response.ok) {
+        await deleteOption(token!,optionId);
           setQuestions(
             questions.map((q) =>
               q.id === questionId
@@ -211,9 +216,6 @@ export default function EditGamePage() {
             ),
           )
           toastSuccess("Option deleted successfully")
-        } else {
-          toastError("Failed to delete option")
-        }
       } catch (error) {
         toastError("Error deleting option")
       }
@@ -264,131 +266,84 @@ export default function EditGamePage() {
   }
 
   const handleSaveGame = async () => {
-    if (!validateForm()) return
+  if (!validateForm()) return;
 
-    setSaving(true)
+  setSaving(true);
 
-    const saveGamePromise = async () => {
-      const token= localStorage.getItem("Authorization");
+  const saveGamePromise = async () => {
+    try {
+      if (!token) throw new Error("No authorization token found");
+
       // Step 1: Update game name if changed
       if (game && gameName !== game.game) {
-        const gameResponse = await updateGame(token!,gameId);
+        await updateGame(token, gameId, gameName);
       }
 
       // Step 2: Process questions
       for (const question of questions) {
         if (question.id.startsWith("temp_")) {
           // Create new question
-          const questionResponse = await fetch("/api/questions/create", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              question: question.question,
-              explanation: question.explanation,
-              gameId: gameId,
-            }),
-          })
-
-          if (!questionResponse.ok) {
-            throw new Error("Failed to create question")
-          }
-
-          const questionData = await questionResponse.json()
-          const newQuestionId = questionData.id
+          const questionResponse = await createQuestion(token, {
+            question: question.question,
+            explanation: question.explanation,
+            gameId: gameId,
+          });
+          const questionData = await questionResponse;
+          const newQuestionId = questionData.id;
 
           // Create options for new question
           for (const option of question.options) {
-            const optionResponse = await fetch("/api/options/create", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                option: option.option,
-                isCorrect: option.isCorrect,
-                questionId: newQuestionId,
-                gameId: gameId,
-              }),
-            })
-
-            if (!optionResponse.ok) {
-              throw new Error("Failed to create option")
-            }
+            await createOption(token, {
+              option: option.option,
+              isCorrect: option.isCorrect,
+              questionId: newQuestionId,
+              gameId: gameId,
+            });
           }
         } else {
           // Update existing question
-          const questionResponse = await fetch(`/api/questions/${question.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              question: question.question,
-              explanation: question.explanation,
-            }),
-          })
-
-          if (!questionResponse.ok) {
-            throw new Error("Failed to update question")
-          }
+          await UpdateQuestion(token, question.id, {
+            question: question.question,
+            explanation: question.explanation,
+          });
 
           // Process options
           for (const option of question.options) {
             if (option.id.startsWith("temp_")) {
-              // Create new option
-              const optionResponse = await fetch("/api/options/create", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  option: option.option,
-                  isCorrect: option.isCorrect,
-                  questionId: question.id,
-                  gameId: gameId,
-                }),
-              })
-
-              if (!optionResponse.ok) {
-                throw new Error("Failed to create option")
-              }
+              await createOption(token, {
+                option: option.option,
+                isCorrect: option.isCorrect,
+                questionId: question.id,
+                gameId: gameId,
+              });
             } else {
-              // Update existing option
-              const optionResponse = await fetch(`/api/options/${option.id}`, {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  option: option.option,
-                  isCorrect: option.isCorrect,
-                }),
-              })
-
-              if (!optionResponse.ok) {
-                throw new Error("Failed to update option")
-              }
+              await UpdateOption(token, option.id, {
+                option: option.option,
+                isCorrect: option.isCorrect,
+              });
             }
           }
         }
       }
+    } catch (err) {
+      console.log(err);
     }
+  };
 
-    toastPromise(saveGamePromise(), {
-      loading: "Saving changes...",
-      success: () => {
-        setTimeout(() => {
-          router.push("/my-games")
-        }, 1000)
-        return "Game updated successfully!"
-      },
-      error: (err) => `Error: ${err.message || "Failed to save changes"}`,
-    })
+  toastPromise(saveGamePromise(), {
+    loading: "Saving changes...",
+    success: () => {
+      setTimeout(() => {
+        router.push("/dashboard/my-games");
+      }, 1000);
+      return "Game updated successfully!";
+    },
+    error: (err) => `Error: ${err.message || "Failed to save changes"}`,
+  });
 
-    setSaving(false)
-  }
+  setSaving(false);
+};
+
 
   if (loading) {
     return (

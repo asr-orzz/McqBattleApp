@@ -17,7 +17,7 @@ export const createOption = async (
   return res.data;
 };
 
-export const updateOption = async (
+export const UpdateOption = async (
   token: string,
   id: string,
   data: {
@@ -31,12 +31,10 @@ export const updateOption = async (
 
 export const deleteOption = async (
   token: string,
-  id: string,
-  userId: string
+  id: string
 ) => {
-  const res = await axios.delete(`/options/${id}`, {
-    ...authHeader(token),
-    data: { userId },
-  });
+  const res = await axios.post(`/options/delete/${id}`,{
+
+  } ,authHeader(token));
   return res.data;
 };
