@@ -26,7 +26,7 @@ export const getRequestsForGame = async (gameId: string, token: string) => {
 
 export const approvePlayerRequest = async (requestId: string, token: string) => {
   const response = await axios.patch(
-    `/player-request/${requestId}/approve`,
+    `/playerRequest/${requestId}/approve`,
     {},
     {
       headers: {

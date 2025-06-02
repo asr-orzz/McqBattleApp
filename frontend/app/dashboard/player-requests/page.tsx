@@ -10,7 +10,7 @@ import { Check, X, UserPlus, User, Clock, Gamepad2 } from "lucide-react"
 import pusherClient from "@/lib/pusherClient"
 import { toastPromise } from "@/utils/toast"
 import { getAllMyGames } from "@/lib/api/game"
-import { getRequestsForGame } from "@/lib/api/player"
+import { approvePlayerRequest, getRequestsForGame } from "@/lib/api/player"
 
 interface Game {
   id: string
@@ -31,7 +31,6 @@ interface PlayerRequest {
     email: string
     password: string
   }
-  // Remove the game property since it's not in the actual response
 }
 
 export default function PlayerRequestsPage() {
@@ -111,20 +110,15 @@ export default function PlayerRequestsPage() {
             const token = localStorage.getItem("Authorization")
             if (!token) return
 
-            const response = await fetch(`/api/player-request/game/${gameId}`, {
-              headers: {
-                Authorization: token,
-              },
-            })
-
-            if (response.ok) {
-              const gameRequests = await response.json()
+            const response = await getRequestsForGame(gameId,token)
+            console.log(response);
+              const gameRequests =  response
               const newRequest = gameRequests.find((req: PlayerRequest) => req.id === data.requestId)
 
               if (newRequest) {
                 setRequests((prev) => [newRequest, ...prev])
               }
-            }
+            
           } catch (error) {
             console.error("Error fetching new request:", error)
           }
@@ -148,7 +142,7 @@ export default function PlayerRequestsPage() {
 
   const handleApproveRequest = async (requestId: string) => {
     setProcessingRequest(requestId)
-
+    console.log(requestId);
     try {
       const token = localStorage.getItem("Authorization")
       if (!token) {
@@ -156,13 +150,7 @@ export default function PlayerRequestsPage() {
       }
 
       await toastPromise(
-        fetch(`/api/player-request/${requestId}/approve`, {
-          method: "PATCH",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-        }),
+         approvePlayerRequest(requestId,token),
         {
           success: "Request approved successfully",
           loading: "Approving request...",
