@@ -10,6 +10,7 @@ import { Trophy, Gamepad2, Clock, User } from "lucide-react"
 import pusherClient from "@/lib/pusherClient"
 import { toastPromise } from "@/utils/toast"
 import { getAllGames } from "@/lib/api/game"
+import { sendPlayerRequest } from "@/lib/api/player"
 
 interface Game {
   id: string
@@ -127,19 +128,28 @@ export default function ActiveGamesPage() {
     setJoiningGame(gameId)
 
     try {
-      const token = localStorage.getItem("Authorization")
+      const token = localStorage.getItem("Authorization");
       if (!token) {
         throw new Error("Authorization token not found")
       }
 
+      // await toastPromise(
+      //   fetch(`/api/games/${gameId}/join-request`, {
+      //     method: "POST",
+      //     headers: {
+      //       Authorization: token,
+      //       "Content-Type": "application/json",
+      //     },
+      //   }),
+      //   {
+      //     success: "Join request sent successfully",
+      //     loading: "Sending join request...",
+      //     error: "Failed to send join request",
+      //   },
+      // )
       await toastPromise(
-        fetch(`/api/games/${gameId}/join-request`, {
-          method: "POST",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-        }),
+          sendPlayerRequest(gameId,token)
+        ,
         {
           success: "Join request sent successfully",
           loading: "Sending join request...",

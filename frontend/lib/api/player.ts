@@ -2,7 +2,7 @@ import axios from "./axiosInstance";
 
 export const sendPlayerRequest = async (gameId: string, token: string) => {
   const response = await axios.post(
-    `/player-request/${gameId}`,
+    `/playerRequest/${gameId}`,
     {},
     {
       headers: {
@@ -14,7 +14,9 @@ export const sendPlayerRequest = async (gameId: string, token: string) => {
 };
 
 export const getRequestsForGame = async (gameId: string, token: string) => {
-  const response = await axios.get(`/player-request/game/${gameId}`, {
+  const response = await axios.post(`/playerRequest/game/${gameId}`,{
+    
+  }, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

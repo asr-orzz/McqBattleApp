@@ -46,7 +46,7 @@ playerRequestRouter.post("/:gameId", async (req, res) => {
   }
 });
 
-playerRequestRouter.get("/game/:gameId", async (req, res) => {
+playerRequestRouter.post("/game/:gameId", async (req, res) => {
   const userId = req.body.userId;
   const { gameId } = req.params;
 
