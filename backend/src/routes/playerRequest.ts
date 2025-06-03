@@ -100,32 +100,49 @@ playerRequestRouter.patch("/:requestId/approve", async (req, res) => {
 
   res.json(updated);
 });
-
 playerRequestRouter.patch("/:requestId/reject", async (req, res) => {
   const userId = req.body.userId;
   const { requestId } = req.params;
 
-  const request = await prisma.playerRequest.findUnique({
-    where: { id: requestId },
-    include: { game: true },
-  });
+  try {
+    const request = await prisma.playerRequest.findUnique({
+      where: { id: requestId },
+      include: { game: true },
+    });
 
-  if (!request) {
-    res.status(404).json({ error: "Request not found" });
-    return
+    if (!request) {
+      res.status(404).json({ error: "Request not found" });
+      return
+    }
+
+    if (request.game.userId !== userId) {
+      res.status(403).json({ error: "Unauthorized" });
+      return
+    }
+
+    const updated = await prisma.playerRequest.update({
+      where: { id: requestId },
+      data: { status: "REJECTED" },
+    });
+
+    try {
+      await pusher.trigger(`game-${request.gameId}`, "player-rejected", {
+        requestId: request.id,
+        userId: request.userId,
+        gameId: request.gameId,
+        message: "Your request to join the game was rejected.",
+      });
+    } catch (err) {
+      console.error("Pusher trigger (reject) failed:", err);
+    }
+
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong" });
   }
-  if (request.game.userId !== userId){
-     res.status(403).json({ error: "Unauthorized" });
-     return
-  }
-
-  const updated = await prisma.playerRequest.update({
-    where: { id: requestId },
-    data: { status: "REJECTED" },
-  });
-
-  res.json(updated);
 });
+
 
 playerRequestRouter.post("/delete/:requestId", async (req, res) => {
   const userId = req.body.userId;

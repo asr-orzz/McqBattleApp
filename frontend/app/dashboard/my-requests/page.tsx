@@ -80,7 +80,8 @@ export default function MyRequestsPage() {
 
     const gameIds = [...new Set(requests.map((req) => req.gameId))]
 
-    const channels = gameIds.map((gameId) => {
+    // Subscribe to game channels for both approval and rejection notifications
+    const gameChannels = gameIds.map((gameId) => {
       const channel = pusherClient.subscribe(`game-${gameId}`)
 
       // Listen for when the user's request is approved
@@ -103,12 +104,28 @@ export default function MyRequestsPage() {
         }
       })
 
+      // Listen for when a player request is rejected
+      channel.bind("player-rejected", (data: { requestId: string; gameId: string; message: string }) => {
+        console.log("Player rejected:", data) // For debugging
+        console.log("Hello");
+        // Find the request that was rejected (check if it belongs to current user)
+        const rejectedRequest = requests.find((req) => req.id === data.requestId && req.userId === currentUserId)
+
+        if (rejectedRequest) {
+          // Update the request status locally
+          setRequests((prev) => prev.map((req) => (req.id === data.requestId ? { ...req, status: "REJECTED" } : req)))
+
+          // Show the exact message from the backend
+          toastSuccess(data.message || `Your request to join "${rejectedRequest.game.game}" was rejected.`)
+        }
+      })
+
       return channel
     })
 
     // Clean up subscriptions on unmount
     return () => {
-      channels.forEach((channel) => {
+      gameChannels.forEach((channel) => {
         pusherClient.unsubscribe(channel.name)
       })
     }
