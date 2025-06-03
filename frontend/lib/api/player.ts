@@ -39,7 +39,7 @@ export const approvePlayerRequest = async (requestId: string, token: string) => 
 
 export const rejectPlayerRequest = async (requestId: string, token: string) => {
   const response = await axios.patch(
-    `/player-request/${requestId}/reject`,
+    `/playerRequest/${requestId}/reject`,
     {},
     {
       headers: {

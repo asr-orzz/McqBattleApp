@@ -10,7 +10,7 @@ import { Check, X, UserPlus, User, Clock, Gamepad2 } from "lucide-react"
 import pusherClient from "@/lib/pusherClient"
 import { toastPromise } from "@/utils/toast"
 import { getAllMyGames } from "@/lib/api/game"
-import { approvePlayerRequest, getRequestsForGame } from "@/lib/api/player"
+import { approvePlayerRequest, getRequestsForGame, rejectPlayerRequest } from "@/lib/api/player"
 
 interface Game {
   id: string
@@ -176,14 +176,22 @@ export default function PlayerRequestsPage() {
         throw new Error("Authorization token not found")
       }
 
+      // await toastPromise(
+      //   fetch(`/api/player-request/${requestId}/reject`, {
+      //     method: "PATCH",
+      //     headers: {
+      //       Authorization: token,
+      //       "Content-Type": "application/json",
+      //     },
+      //   }),
+      //   {
+      //     success: "Request rejected",
+      //     loading: "Rejecting request...",
+      //     error: "Failed to reject request",
+      //   },
+      // )
       await toastPromise(
-        fetch(`/api/player-request/${requestId}/reject`, {
-          method: "PATCH",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-        }),
+        rejectPlayerRequest(requestId,token),
         {
           success: "Request rejected",
           loading: "Rejecting request...",
