@@ -176,20 +176,7 @@ export default function PlayerRequestsPage() {
         throw new Error("Authorization token not found")
       }
 
-      // await toastPromise(
-      //   fetch(`/api/player-request/${requestId}/reject`, {
-      //     method: "PATCH",
-      //     headers: {
-      //       Authorization: token,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }),
-      //   {
-      //     success: "Request rejected",
-      //     loading: "Rejecting request...",
-      //     error: "Failed to reject request",
-      //   },
-      // )
+      
       await toastPromise(
         rejectPlayerRequest(requestId,token),
         {
