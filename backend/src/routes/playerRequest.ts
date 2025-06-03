@@ -7,7 +7,7 @@ export const playerRequestRouter = Router();
 
 playerRequestRouter.use(userMiddleware);
 
-playerRequestRouter.post("/:gameId", async (req, res) => {
+playerRequestRouter.post("/makeRequest/:gameId", async (req, res) => {
   const userId = req.body.userId;
   const { gameId } = req.params;
 
@@ -148,9 +148,8 @@ playerRequestRouter.delete("/:requestId", async (req, res) => {
   res.status(204).end();
 });
 
-playerRequestRouter.get("/my", async (req, res) => {
+playerRequestRouter.post("/my", async (req, res) => {
   const userId = req.body.userId;
-
   const requests = await prisma.playerRequest.findMany({
     where: { userId },
     include: { game: true },

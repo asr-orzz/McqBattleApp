@@ -123,6 +123,7 @@ userRouter.post("/signin", async (req, res) => {
      res.json({
       msg: "Signin successful.",
       token,
+      userId: user.id,
       username: user.username,
       expiresIn: "1d",
     });

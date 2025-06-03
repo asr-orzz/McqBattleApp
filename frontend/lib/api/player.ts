@@ -2,7 +2,7 @@ import axios from "./axiosInstance";
 
 export const sendPlayerRequest = async (gameId: string, token: string) => {
   const response = await axios.post(
-    `/playerRequest/${gameId}`,
+    `/playerRequest/makeRequest/${gameId}`,
     {},
     {
       headers: {
@@ -51,7 +51,7 @@ export const rejectPlayerRequest = async (requestId: string, token: string) => {
 };
 
 export const cancelPlayerRequest = async (requestId: string, token: string) => {
-  const response = await axios.delete(`/player-request/${requestId}`, {
+  const response = await axios.delete(`/playerRequest/${requestId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -60,7 +60,7 @@ export const cancelPlayerRequest = async (requestId: string, token: string) => {
 };
 
 export const getMyPlayerRequests = async (token: string) => {
-  const response = await axios.get(`/player-request/my`, {
+  const response = await axios.post(`/playerRequest/my`,{}, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
