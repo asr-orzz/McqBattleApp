@@ -68,9 +68,9 @@ export default function PlayerRequestsPage() {
       const allRequests: PlayerRequest[] = []
 
       for (const game of games) {
-        const requestsResponse = await getRequestsForGame(game.id,token);
-          const gameRequests = await requestsResponse
-          allRequests.push(...gameRequests)
+        const requestsResponse = await getRequestsForGame(game.id, token)
+        const gameRequests = await requestsResponse
+        allRequests.push(...gameRequests)
       }
 
       // Sort by creation date, newest first
@@ -110,15 +110,14 @@ export default function PlayerRequestsPage() {
             const token = localStorage.getItem("Authorization")
             if (!token) return
 
-            const response = await getRequestsForGame(gameId,token)
-            console.log(response);
-              const gameRequests =  response
-              const newRequest = gameRequests.find((req: PlayerRequest) => req.id === data.requestId)
+            const response = await getRequestsForGame(gameId, token)
+            console.log(response)
+            const gameRequests = response
+            const newRequest = gameRequests.find((req: PlayerRequest) => req.id === data.requestId)
 
-              if (newRequest) {
-                setRequests((prev) => [newRequest, ...prev])
-              }
-            
+            if (newRequest) {
+              setRequests((prev) => [newRequest, ...prev])
+            }
           } catch (error) {
             console.error("Error fetching new request:", error)
           }
@@ -138,25 +137,45 @@ export default function PlayerRequestsPage() {
     }
   }, [authorized, userGames])
 
+  // Set up Pusher subscription for each request
+  useEffect(() => {
+    if (!authorized || requests.length === 0) return
+
+    const channels = requests.map((request) => {
+      const channel = pusherClient.subscribe(`request-${request.id}`)
+
+      channel.bind("request-cancelled", (data: { requestId: string; userId: string; status: string }) => {
+        // Remove the cancelled request from the requests list
+        setRequests((prev) => prev.filter((req) => req.id !== data.requestId))
+      })
+
+      return channel
+    })
+
+    // Clean up subscriptions on unmount
+    return () => {
+      channels.forEach((channel) => {
+        pusherClient.unsubscribe(channel.name)
+      })
+    }
+  }, [authorized, requests])
+
   if (authorized === null) return null
 
   const handleApproveRequest = async (requestId: string) => {
     setProcessingRequest(requestId)
-    console.log(requestId);
+    console.log(requestId)
     try {
       const token = localStorage.getItem("Authorization")
       if (!token) {
         throw new Error("Authorization token not found")
       }
 
-      await toastPromise(
-         approvePlayerRequest(requestId,token),
-        {
-          success: "Request approved successfully",
-          loading: "Approving request...",
-          error: "Failed to approve request",
-        },
-      )
+      await toastPromise(approvePlayerRequest(requestId, token), {
+        success: "Request approved successfully",
+        loading: "Approving request...",
+        error: "Failed to approve request",
+      })
 
       // Update the request status locally
       setRequests((prev) => prev.map((req) => (req.id === requestId ? { ...req, status: "APPROVED" } : req)))
@@ -176,15 +195,11 @@ export default function PlayerRequestsPage() {
         throw new Error("Authorization token not found")
       }
 
-      
-      await toastPromise(
-        rejectPlayerRequest(requestId,token),
-        {
-          success: "Request rejected",
-          loading: "Rejecting request...",
-          error: "Failed to reject request",
-        },
-      )
+      await toastPromise(rejectPlayerRequest(requestId, token), {
+        success: "Request rejected",
+        loading: "Rejecting request...",
+        error: "Failed to reject request",
+      })
 
       // Update the request status locally
       setRequests((prev) => prev.map((req) => (req.id === requestId ? { ...req, status: "REJECTED" } : req)))

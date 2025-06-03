@@ -51,7 +51,7 @@ export const rejectPlayerRequest = async (requestId: string, token: string) => {
 };
 
 export const cancelPlayerRequest = async (requestId: string, token: string) => {
-  const response = await axios.delete(`/playerRequest/${requestId}`, {
+  const response = await axios.post(`/playerRequest/delete/${requestId}`,{}, {
     headers: {
       Authorization: `Bearer ${token}`,
     },

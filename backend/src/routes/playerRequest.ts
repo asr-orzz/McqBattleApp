@@ -127,7 +127,7 @@ playerRequestRouter.patch("/:requestId/reject", async (req, res) => {
   res.json(updated);
 });
 
-playerRequestRouter.delete("/:requestId", async (req, res) => {
+playerRequestRouter.post("/delete/:requestId", async (req, res) => {
   const userId = req.body.userId;
   const { requestId } = req.params;
 
@@ -140,9 +140,14 @@ playerRequestRouter.delete("/:requestId", async (req, res) => {
     return
   } 
 
-  await prisma.playerRequest.update({
-    where: { id: requestId },
-    data: { status: "CANCELLED" },
+  await prisma.playerRequest.delete({
+    where: { id: requestId }
+  });
+
+  await pusher.trigger(`request-${requestId}`, "request-cancelled", {
+    requestId,
+    userId,
+    status: "CANCELLED",
   });
 
   res.status(204).end();

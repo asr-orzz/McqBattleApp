@@ -363,7 +363,7 @@ export default function MyRequestsPage() {
                   You haven't requested to join any games yet. Browse active games to find games to join!
                 </p>
                 <Button
-                  onClick={() => router.push("/active-games")}
+                  onClick={() => router.push("/dashboard/active-games")}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2"
                 >
                   Browse Active Games
