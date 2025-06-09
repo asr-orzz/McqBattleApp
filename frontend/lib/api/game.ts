@@ -34,9 +34,9 @@ export const updateGame = async (token: string, gameId: string,newName: string) 
 };
 
 export const startGame = async (token: string, gameId: string) => {
-  const res = await axios.post('/games/start', { gameId }, {
+  const res = await axios.patch(`/games/${gameId}/start`, { }, {
     headers:{
-      Authorization: token
+      Authorization: `Bearer ${token}`
     },  
   });
   return res.data;
@@ -69,3 +69,5 @@ export const getGameById = async (token: string, gameId: string) => {
   },authHeader(token));
   return res.data;
 };
+
+

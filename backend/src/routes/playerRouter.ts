@@ -127,10 +127,9 @@ playerRouter.post("/player-answer", userMiddleware, async (req, res) => {
      return
   }
 });
-playerRouter.get("/first-question", userMiddleware, async (req, res) => {
+playerRouter.post("/first-question", userMiddleware, async (req, res) => {
   const { gameId } = req.query;
   const userId = req.body.userId;
-
   if (!gameId) {
      res.status(400).json({ error: "Missing gameId" });
      return

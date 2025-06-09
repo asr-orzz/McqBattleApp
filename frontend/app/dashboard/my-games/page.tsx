@@ -18,8 +18,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Plus, Play, Trash2, Trophy, Users, Gamepad2, Edit } from "lucide-react"
-import { deleteGame, getAllMyGames } from "@/lib/api/game"
-import { toastPromise } from "@/utils/toast"
+import { deleteGame, getAllMyGames, startGame } from "@/lib/api/game"
+import { toastPromise, toastSuccess } from "@/utils/toast"
 
 interface Game {
   id: string
@@ -90,8 +90,10 @@ export default function MyGamesPage() {
     }
   }
 
-  const handleStartGame = (gameId: string) => {
-    router.push(`/game/${gameId}`)
+  const handleStartGame = async (gameId: string) => {
+    const token=localStorage.getItem("Authorization");
+    await startGame(token!,gameId)
+    toastSuccess("Game has been Started");
   }
 
   const handleEditGame = (gameId: string) => {

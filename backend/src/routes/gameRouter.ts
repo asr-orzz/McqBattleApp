@@ -255,6 +255,7 @@ gameRouter.put("/:gameId", userMiddleware, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 gameRouter.get("/:gameId/status", async (req, res) => {
   const { gameId } = req.params;
 
@@ -266,8 +267,22 @@ gameRouter.get("/:gameId/status", async (req, res) => {
   try {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: {
-        status: true, 
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+        players: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -276,9 +291,60 @@ gameRouter.get("/:gameId/status", async (req, res) => {
       return;
     }
 
-    res.status(200).json({ status: game.status });
+    res.status(200).json({
+      name: game.game, // game name
+      status: game.status,
+      ownerUsername: game.user.username, // game owner's username
+      players: game.players.map((player) => ({
+        id: player.user.id,
+        username: player.user.username,
+      })),
+    });
   } catch (error) {
-    console.error("Error fetching game status:", error);
+    console.error("Error fetching game status and players:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+gameRouter.patch("/:gameId/start", userMiddleware, async (req, res) => {
+  const { gameId } = req.params;
+  const { userId } = req.body;
+
+  if (!gameId || !userId) {
+     res.status(400).json({ error: "Missing gameId or userId" });
+     return
+  }
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+       res.status(404).json({ error: "Game not found" });
+       return
+    }
+
+    if (game.userId !== userId) {
+       res.status(403).json({ error: "Only the game creator can start the game" });
+       return
+    }
+
+    const updatedGame = await prisma.game.update({
+      where: { id: gameId },
+      data: { status: "STARTED" },
+    });
+
+    await pusher.trigger(`game-${gameId}`, "game-started", {
+      gameId: updatedGame.id,
+      status: updatedGame.status,
+      startedAt: new Date(),
+    });
+
+     res.status(200).json({ message: "Game started", game: updatedGame });
+     return
+  } catch (error) {
+    console.error("Error starting game:", error);
+     res.status(500).json({ error: "Internal server error" });
+     return
   }
 });
