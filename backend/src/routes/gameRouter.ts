@@ -255,3 +255,30 @@ gameRouter.put("/:gameId", userMiddleware, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+gameRouter.get("/:gameId/status", async (req, res) => {
+  const { gameId } = req.params;
+
+  if (!gameId) {
+    res.status(400).json({ error: "Missing gameId" });
+    return;
+  }
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: {
+        status: true, 
+      },
+    });
+
+    if (!game) {
+      res.status(404).json({ error: "Game not found" });
+      return;
+    }
+
+    res.status(200).json({ status: game.status });
+  } catch (error) {
+    console.error("Error fetching game status:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
