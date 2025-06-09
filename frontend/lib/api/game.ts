@@ -42,6 +42,15 @@ export const startGame = async (token: string, gameId: string) => {
   return res.data;
 };
 
+export const endGame = async (token: string, gameId: string) => {
+  const res = await axios.patch(`/games/${gameId}/end`, { }, {
+    headers:{
+      Authorization: `Bearer ${token}`
+    },  
+  });
+  return res.data;
+};
+
 export const getAllMyGames = async (token: string) => {
   const res = await axios.post('/games/my-games',{
     

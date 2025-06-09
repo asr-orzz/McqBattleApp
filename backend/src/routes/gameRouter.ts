@@ -348,3 +348,45 @@ gameRouter.patch("/:gameId/start", userMiddleware, async (req, res) => {
      return
   }
 });
+gameRouter.patch("/:gameId/end", userMiddleware, async (req, res) => {
+  const { gameId } = req.params;
+  const { userId } = req.body;
+
+  if (!gameId || !userId) {
+    res.status(400).json({ error: "Missing gameId or userId" });
+    return;
+  }
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+      res.status(404).json({ error: "Game not found" });
+      return;
+    }
+
+    if (game.userId !== userId) {
+      res.status(403).json({ error: "Only the game creator can end the game" });
+      return;
+    }
+
+    const endedGame = await prisma.game.update({
+      where: { id: gameId },
+      data: {
+        status: "COMPLETED"
+      },
+    });
+
+    await pusher.trigger(`game-${gameId}`, "game-ended", {
+      gameId: endedGame.id,
+      status: endedGame.status
+    });
+
+    res.status(200).json({ message: "Game ended", game: endedGame });
+  } catch (error) {
+    console.error("Error ending game:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});

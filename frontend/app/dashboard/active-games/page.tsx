@@ -6,11 +6,18 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Trophy, Gamepad2, Clock, User } from "lucide-react"
+import { Trophy, Gamepad2, Clock, User, UserPlus, LogIn, X } from "lucide-react"
 import pusherClient from "@/lib/pusherClient"
-import { toastPromise } from "@/utils/toast"
+import { toastPromise, toastSuccess, toastError } from "@/utils/toast"
 import { getAllGames } from "@/lib/api/game"
 import { sendPlayerRequest } from "@/lib/api/player"
+import Pusher from "pusher-js"
+
+interface Player {
+  id: string
+  userId: string
+  gameId: string
+}
 
 interface Game {
   id: string
@@ -18,6 +25,7 @@ interface Game {
   userId: string
   createdAt: string
   status: "WAITING" | "ACTIVE" | "COMPLETED"
+  players?: { id: string; userId: string; gameId: string }[]
   user: {
     id: string
     username: string
@@ -34,6 +42,10 @@ interface PusherGameEvent {
   createdAt: string
 }
 
+interface RequestStatus {
+  [gameId: string]: "none" | "pending" | "approved" | "rejected" | "player"
+}
+
 export default function ActiveGamesPage() {
   const router = useRouter()
   const [games, setGames] = useState<Game[]>([])
@@ -41,22 +53,40 @@ export default function ActiveGamesPage() {
   const [authorized, setAuthorized] = useState<boolean | null>(null)
   const [joiningGame, setJoiningGame] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null)
+  const [requestStatus, setRequestStatus] = useState<RequestStatus>({})
+  const [pusher, setPusher] = useState<Pusher | null>(null)
 
   const fetchActiveGames = async () => {
     setLoading(true)
 
     try {
       const token = localStorage.getItem("Authorization")
-      if (!token) {
-        console.error("No authorization token found.")
+      const userId = localStorage.getItem("userId")
+
+      if (!token || !userId) {
+        console.error("No authorization token or userId found.")
         return
       }
 
-      const response = await getAllGames();
-
+      const response = await getAllGames()
       const data = await response
-      // API returns array directly, not wrapped in games property
-      setGames(data || [])
+
+      // Filter to only show WAITING games and exclude user's own games
+      const waitingGames = (data || []).filter((game: Game) => game.status === "WAITING" && game.userId !== userId)
+
+      setGames(waitingGames)
+
+      // After setGames(waitingGames), add:
+      const initialRequestStatus: RequestStatus = {}
+      waitingGames.forEach((game: Game) => {
+        const isPlayer = game.players?.some((player) => player.userId === userId)
+        if (isPlayer) {
+          initialRequestStatus[game.id] = "player"
+        } else {
+          initialRequestStatus[game.id] = "none"
+        }
+      })
+      setRequestStatus(initialRequestStatus)
     } catch (error) {
       console.error("Error fetching active games:", error)
     } finally {
@@ -69,16 +99,22 @@ export default function ActiveGamesPage() {
     const token = localStorage.getItem("Authorization")
     const userId = localStorage.getItem("userId")
 
-    if (!token || !username) {
+    if (!token || !username || !userId) {
       router.push("/auth")
     } else {
       setAuthorized(true)
-      setCurrentUser({ id: userId || "", username })
-      fetchActiveGames()
+      setCurrentUser({ id: userId, username })
     }
   }, [router])
 
-  // Set up Pusher subscription
+  // Fetch games when currentUser is set
+  useEffect(() => {
+    if (currentUser) {
+      fetchActiveGames()
+    }
+  }, [currentUser])
+
+  // Set up Pusher subscription for general game events
   useEffect(() => {
     if (!authorized) return
 
@@ -93,6 +129,7 @@ export default function ActiveGamesPage() {
           userId: "", // Not provided in Pusher event
           createdAt: newGameEvent.createdAt,
           status: newGameEvent.status as "WAITING",
+          players: [], // Empty players array for new games
           user: {
             id: "", // Not provided in Pusher event
             username: newGameEvent.creator,
@@ -101,26 +138,110 @@ export default function ActiveGamesPage() {
           },
         }
 
-        setGames((prevGames) => {
-          const gameExists = prevGames.some((game) => game.id === newGame.id)
-          if (!gameExists) {
-            return [newGame, ...prevGames]
-          }
-          return prevGames
-        })
+        // Only add if it's not the current user's game
+        if (newGame.userId !== currentUser?.id) {
+          setGames((prevGames) => {
+            const gameExists = prevGames.some((game) => game.id === newGame.id)
+            if (!gameExists) {
+              return [newGame, ...prevGames]
+            }
+            return prevGames
+          })
+
+          // Set initial request status
+          setRequestStatus((prev) => ({
+            ...prev,
+            [newGame.id]: "none",
+          }))
+        }
       }
     })
 
     // Add listener for game deletion
     channel.bind("game-deleted", (deletedGameEvent: { gameId: string }) => {
       setGames((prevGames) => prevGames.filter((game) => game.id !== deletedGameEvent.gameId))
+      setRequestStatus((prev) => {
+        const newStatus = { ...prev }
+        delete newStatus[deletedGameEvent.gameId]
+        return newStatus
+      })
     })
 
     // Clean up subscription on unmount
     return () => {
       pusherClient.unsubscribe("games")
     }
-  }, [authorized])
+  }, [authorized, currentUser])
+
+  // Set up Pusher subscriptions for individual game channels
+  useEffect(() => {
+    if (games.length > 0 && currentUser && !pusher) {
+      const pusherClient = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+      })
+
+      setPusher(pusherClient)
+
+      // Subscribe to each game's channel to listen for player events
+      games.forEach((game) => {
+        const channel = pusherClient.subscribe(`game-${game.id}`)
+
+        // Listen for player approval
+        channel.bind("player-approved", (data: { userId: string }) => {
+          console.log("Player approved event received:", data)
+
+          // Check if the approved user is the current user
+          if (data.userId === currentUser.id) {
+            setRequestStatus((prev) => ({
+              ...prev,
+              [game.id]: "approved",
+            }))
+
+            toastSuccess(`Your request to join "${game.game}" has been approved!`)
+          }
+        })
+
+        channel.bind(
+          "player-rejected",
+          (data: {
+            requestId: string
+            userId: string
+            gameId: string
+            message: string
+          }) => {
+            console.log("Player rejected event received:", data)
+
+            // Check if the rejected user is the current user
+            if (data.userId === currentUser.id) {
+              setRequestStatus((prev) => ({
+                ...prev,
+                [data.gameId]: "rejected",
+              }))
+
+              toastError(data.message || "Your request was rejected.")
+            }
+          },
+        )
+      })
+
+      // Cleanup function
+      return () => {
+        games.forEach((game) => {
+          pusherClient.unsubscribe(`game-${game.id}`)
+        })
+        pusherClient.disconnect()
+      }
+    }
+  }, [games, currentUser, pusher])
+
+  // Cleanup Pusher on component unmount
+  useEffect(() => {
+    return () => {
+      if (pusher) {
+        pusher.disconnect()
+      }
+    }
+  }, [pusher])
 
   if (authorized === null) return null
 
@@ -128,34 +249,22 @@ export default function ActiveGamesPage() {
     setJoiningGame(gameId)
 
     try {
-      const token = localStorage.getItem("Authorization");
+      const token = localStorage.getItem("Authorization")
       if (!token) {
         throw new Error("Authorization token not found")
       }
 
-      // await toastPromise(
-      //   fetch(`/api/games/${gameId}/join-request`, {
-      //     method: "POST",
-      //     headers: {
-      //       Authorization: token,
-      //       "Content-Type": "application/json",
-      //     },
-      //   }),
-      //   {
-      //     success: "Join request sent successfully",
-      //     loading: "Sending join request...",
-      //     error: "Failed to send join request",
-      //   },
-      // )
-      await toastPromise(
-          sendPlayerRequest(gameId,token)
-        ,
-        {
-          success: "Join request sent successfully",
-          loading: "Sending join request...",
-          error: "Failed to send join request",
-        },
-      )
+      await toastPromise(sendPlayerRequest(gameId, token), {
+        success: "Join request sent successfully",
+        loading: "Sending join request...",
+        error: "Failed to send join request",
+      })
+
+      // Update request status to pending
+      setRequestStatus((prev) => ({
+        ...prev,
+        [gameId]: "pending",
+      }))
     } catch (error) {
       console.error("Error sending join request:", error)
     } finally {
@@ -182,8 +291,86 @@ export default function ActiveGamesPage() {
     return `${diffInDays}d ago`
   }
 
-  // Use sample data for demonstration
-  const displayGames = games
+  const getButtonContent = (gameId: string) => {
+    const status = requestStatus[gameId] || "none"
+    const isJoining = joiningGame === gameId
+
+    switch (status) {
+      case "player":
+        return {
+          text: "Join Lobby",
+          disabled: false,
+          onClick: () => handleJoinLobby(gameId),
+          className: "w-full bg-green-600 hover:bg-green-700 text-white font-medium",
+          icon: <LogIn className="w-4 h-4 mr-2" />,
+        }
+      case "pending":
+        return {
+          text: "Request Sent",
+          disabled: true,
+          onClick: () => {},
+          className: "w-full bg-yellow-500 text-white font-medium cursor-not-allowed",
+          icon: <UserPlus className="w-4 h-4 mr-2" />,
+        }
+      case "approved":
+        return {
+          text: "Join Lobby",
+          disabled: false,
+          onClick: () => handleJoinLobby(gameId),
+          className: "w-full bg-green-600 hover:bg-green-700 text-white font-medium",
+          icon: <LogIn className="w-4 h-4 mr-2" />,
+        }
+      case "rejected":
+        return {
+          text: "Request Rejected",
+          disabled: true,
+          onClick: () => {},
+          className: "w-full bg-red-500 text-white font-medium cursor-not-allowed",
+          icon: <X className="w-4 h-4 mr-2" />,
+        }
+      default:
+        return {
+          text: isJoining ? "Sending Request..." : "Send Join Request",
+          disabled: isJoining,
+          onClick: () => handleJoinRequest(gameId),
+          className: "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium",
+          icon: <UserPlus className="w-4 h-4 mr-2" />,
+        }
+    }
+  }
+
+  const getStatusBadge = (gameId: string) => {
+    const status = requestStatus[gameId] || "none"
+
+    switch (status) {
+      case "player":
+        return (
+          <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
+            joined
+          </Badge>
+        )
+      case "pending":
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100 text-xs">
+            pending
+          </Badge>
+        )
+      case "approved":
+        return (
+          <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
+            approved
+          </Badge>
+        )
+      case "rejected":
+        return (
+          <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100 text-xs">
+            rejected
+          </Badge>
+        )
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 pt-6">
@@ -195,8 +382,7 @@ export default function ActiveGamesPage() {
               Active Games
             </h1>
             <p className="text-slate-600 mt-1">
-              Join waiting games and start battling! {displayGames.length} game{displayGames.length !== 1 ? "s" : ""}{" "}
-              available
+              Join waiting games and start battling! {games.length} game{games.length !== 1 ? "s" : ""} available
             </p>
           </div>
         </div>
@@ -215,10 +401,10 @@ export default function ActiveGamesPage() {
               </Card>
             ))}
           </div>
-        ) : displayGames.length === 0 ? (
+        ) : games.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-lg border border-slate-200 shadow-sm">
             <Gamepad2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-slate-900 mb-2">No Active Games</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-2">No Waiting Games</h2>
             <p className="text-slate-600 mb-6 max-w-md mx-auto">
               There are no games waiting for players right now. Check back later or create your own game!
             </p>
@@ -231,52 +417,65 @@ export default function ActiveGamesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayGames.map((game) => (
-              <Card
-                key={game.id}
-                className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-slate-900 text-lg mb-1 line-clamp-2">{game.game}</CardTitle>
-                      <CardDescription className="text-slate-600 flex items-center">
-                        <User className="h-3.5 w-3.5 mr-1 text-slate-400" />
-                        Created by {game.user.username}
-                      </CardDescription>
-                    </div>
-                    <Badge variant="outline" className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-                      waiting
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 text-sm">
-                    <div className="flex items-center text-slate-600">
-                      <Trophy className="w-4 h-4 mr-2 text-slate-500" />
-                      Quiz Game
-                    </div>
-                  </div>
+            {games.map((game) => {
+              const buttonConfig = getButtonContent(game.id)
+              const statusBadge = getStatusBadge(game.id)
 
-                  <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
-                    <div className="flex items-center">
-                      <Clock className="h-3.5 w-3.5 mr-1" />
-                      {formatTimeAgo(game.createdAt)}
+              return (
+                <Card
+                  key={game.id}
+                  className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-slate-900 text-lg mb-1 line-clamp-2">{game.game}</CardTitle>
+                        <CardDescription className="text-slate-600 flex items-center">
+                          <User className="h-3.5 w-3.5 mr-1 text-slate-400" />
+                          Created by {game.user.username}
+                        </CardDescription>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                          waiting
+                        </Badge>
+                        {statusBadge}
+                      </div>
                     </div>
-                  </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4 text-sm">
+                      <div className="flex items-center text-slate-600">
+                        <Trophy className="w-4 h-4 mr-2 text-slate-500" />
+                        Quiz Game
+                      </div>
+                      <div className="flex items-center text-slate-600">
+                        <User className="w-4 h-4 mr-2 text-slate-500" />
+                        {game.players?.length || 0} player{(game.players?.length || 0) !== 1 ? "s" : ""} joined
+                      </div>
+                    </div>
 
-                  <div className="pt-2">
-                    <Button
-                      onClick={() => handleJoinRequest(game.id)}
-                      disabled={joiningGame === game.id}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                    >
-                      {joiningGame === game.id ? "Sending Request..." : "Send Join Request"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+                      <div className="flex items-center">
+                        <Clock className="h-3.5 w-3.5 mr-1" />
+                        {formatTimeAgo(game.createdAt)}
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      <Button
+                        onClick={buttonConfig.onClick}
+                        disabled={buttonConfig.disabled}
+                        className={buttonConfig.className}
+                      >
+                        {buttonConfig.icon}
+                        {buttonConfig.text}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,9 +17,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Play, Trash2, Trophy, Users, Gamepad2, Edit } from "lucide-react"
-import { deleteGame, getAllMyGames, startGame } from "@/lib/api/game"
+import { Plus, Play, Trash2, Trophy, Users, Gamepad2, Edit, Square } from "lucide-react"
+import { deleteGame, getAllMyGames, startGame, endGame } from "@/lib/api/game"
 import { toastPromise, toastSuccess } from "@/utils/toast"
+import Pusher from "pusher-js"
 
 interface Game {
   id: string
@@ -29,7 +30,7 @@ interface Game {
   questions: any[]
   answers: any[]
   createdAt: string
-  status: "WAITING" | "ACTIVE" | "COMPLETED"
+  status: "WAITING" | "ACTIVE" | "COMPLETED" | "STARTED"
 }
 
 export default function MyGamesPage() {
@@ -37,6 +38,9 @@ export default function MyGamesPage() {
   const [games, setGames] = useState<Game[]>([])
   const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState<boolean | null>(null)
+  const pusherRef = useRef<Pusher | null>(null)
+  const subscribedChannelsRef = useRef<Set<string>>(new Set())
+
   const fetchMyGames = async () => {
     setLoading(true)
 
@@ -56,6 +60,72 @@ export default function MyGamesPage() {
       setLoading(false)
     }
   }
+
+  // Initialize Pusher once
+  useEffect(() => {
+    if (!pusherRef.current) {
+      pusherRef.current = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+      })
+    }
+
+    return () => {
+      if (pusherRef.current) {
+        pusherRef.current.disconnect()
+        pusherRef.current = null
+      }
+    }
+  }, [])
+
+  // Subscribe to game channels when games change
+  useEffect(() => {
+    if (!pusherRef.current || games.length === 0) return
+
+    // Subscribe to new game channels
+    games.forEach((game) => {
+      const channelName = `game-${game.id}`
+
+      if (!subscribedChannelsRef.current.has(channelName)) {
+        const channel = pusherRef.current!.subscribe(channelName)
+        subscribedChannelsRef.current.add(channelName)
+
+        channel.bind("game-started", (data: { gameId: string; status: string; startedAt: string }) => {
+          console.log("Game started event received:", data)
+
+          setGames((prevGames) =>
+            prevGames.map((g) => (g.id === data.gameId ? { ...g, status: "STARTED" as const } : g)),
+          )
+
+          const gameName = games.find((g) => g.id === data.gameId)?.game
+          toastSuccess(`Game "${gameName}" has been started!`)
+        })
+
+        channel.bind("game-ended", (data: { gameId: string; status: string }) => {
+          console.log("Game ended event received:", data)
+
+          setGames((prevGames) =>
+            prevGames.map((g) => (g.id === data.gameId ? { ...g, status: "COMPLETED" as const } : g)),
+          )
+
+          const gameName = games.find((g) => g.id === data.gameId)?.game
+          toastSuccess(`Game "${gameName}" has been completed!`)
+        })
+      }
+    })
+
+    // Cleanup function to unsubscribe from channels that are no longer needed
+    return () => {
+      const currentGameIds = new Set(games.map((game) => game.id))
+
+      subscribedChannelsRef.current.forEach((channelName) => {
+        const gameId = channelName.replace("game-", "")
+        if (!currentGameIds.has(gameId) && pusherRef.current) {
+          pusherRef.current.unsubscribe(channelName)
+          subscribedChannelsRef.current.delete(channelName)
+        }
+      })
+    }
+  }, [games])
 
   useEffect(() => {
     const username = localStorage.getItem("username")
@@ -78,7 +148,7 @@ export default function MyGamesPage() {
         throw new Error("Authorization token not found")
       }
 
-      const response = await toastPromise(deleteGame(token, gameId), {
+      await toastPromise(deleteGame(token, gameId), {
         success: "Game Deleted",
         loading: "Deleting Game",
         error: "There is some error in deleting game",
@@ -91,9 +161,41 @@ export default function MyGamesPage() {
   }
 
   const handleStartGame = async (gameId: string) => {
-    const token=localStorage.getItem("Authorization");
-    await startGame(token!,gameId)
-    toastSuccess("Game has been Started");
+    try {
+      const token = localStorage.getItem("Authorization")
+      if (!token) {
+        throw new Error("Authorization token not found")
+      }
+
+      // Optimistically update the UI
+      setGames((prevGames) => prevGames.map((g) => (g.id === gameId ? { ...g, status: "STARTED" as const } : g)))
+
+      await startGame(token, gameId)
+      toastSuccess("Game started successfully!")
+    } catch (error) {
+      console.error("Error starting game:", error)
+      // Revert optimistic update on error
+      fetchMyGames()
+    }
+  }
+
+  const handleEndGame = async (gameId: string) => {
+    try {
+      const token = localStorage.getItem("Authorization")
+      if (!token) {
+        throw new Error("Authorization token not found")
+      }
+
+      // Optimistically update the UI
+      setGames((prevGames) => prevGames.map((g) => (g.id === gameId ? { ...g, status: "COMPLETED" as const } : g)))
+
+      await endGame(token, gameId)
+      toastSuccess("Game ended successfully!")
+    } catch (error) {
+      console.error("Error ending game:", error)
+      // Revert optimistic update on error
+      fetchMyGames()
+    }
   }
 
   const handleEditGame = (gameId: string) => {
@@ -102,6 +204,35 @@ export default function MyGamesPage() {
 
   const handleCreateGame = () => {
     router.push("/dashboard/create-game")
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "STARTED":
+        return {
+          variant: "default" as const,
+          className: "bg-green-100 text-green-800 hover:bg-green-100",
+          text: "started",
+        }
+      case "ACTIVE":
+        return {
+          variant: "default" as const,
+          className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+          text: "active",
+        }
+      case "COMPLETED":
+        return {
+          variant: "secondary" as const,
+          className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
+          text: "completed",
+        }
+      default:
+        return {
+          variant: "outline" as const,
+          className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
+          text: "waiting",
+        }
+    }
   }
 
   return (
@@ -152,99 +283,109 @@ export default function MyGamesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {games.map((game) => (
-              <Card
-                key={game.id}
-                className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-slate-900 text-lg mb-1 line-clamp-2">{game.game}</CardTitle>
-                      <CardDescription className="text-slate-600">
-                        Created on {new Date(game.createdAt).toLocaleDateString()}
-                      </CardDescription>
-                    </div>
-                    <Badge
-                      variant={
-                        game.status === "ACTIVE" ? "default" : game.status === "COMPLETED" ? "secondary" : "outline"
-                      }
-                      className={`ml-2 ${
-                        game.status === "ACTIVE"
-                          ? "bg-green-100 text-green-800 hover:bg-green-100"
-                          : game.status === "COMPLETED"
-                            ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
-                            : "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                      }`}
-                    >
-                      {game.status.toLowerCase()}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center text-slate-600">
-                      <Users className="w-4 h-4 mr-2 text-slate-500" />
-                      {game.players.length} players
-                    </div>
-                    <div className="flex items-center text-slate-600">
-                      <Trophy className="w-4 h-4 mr-2 text-slate-500" />
-                      {game.questions.length} questions
-                    </div>
-                  </div>
+            {games.map((game) => {
+              const statusBadge = getStatusBadge(game.status)
 
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      onClick={() => handleStartGame(game.id)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                    >
-                      <Play className="w-4 h-4 mr-2" />
-                      Start Game
-                    </Button>
+              return (
+                <Card
+                  key={game.id}
+                  className="border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-slate-900 text-lg mb-1 line-clamp-2">{game.game}</CardTitle>
+                        <CardDescription className="text-slate-600">
+                          Created on {new Date(game.createdAt).toLocaleDateString()}
+                        </CardDescription>
+                      </div>
+                      <Badge variant={statusBadge.variant} className={`ml-2 ${statusBadge.className}`}>
+                        {statusBadge.text}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center text-slate-600">
+                        <Users className="w-4 h-4 mr-2 text-slate-500" />
+                        {game.players.length} players
+                      </div>
+                      <div className="flex items-center text-slate-600">
+                        <Trophy className="w-4 h-4 mr-2 text-slate-500" />
+                        {game.questions.length} questions
+                      </div>
+                    </div>
 
-                    <Button
-                      onClick={() => handleEditGame(game.id)}
-                      variant="outline"
-                      size="icon"
-                      className="border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
+                    <div className="flex gap-2 pt-2">
+                      {game.status === "STARTED" ? (
                         <Button
-                          variant="outline"
-                          size="icon"
-                          className="border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                          onClick={() => handleEndGame(game.id)}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Square className="w-4 h-4 mr-2" />
+                          End Game
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-white border-slate-200">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Game</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete "{game.game}"? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel className="border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
-                            Cancel
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteGame(game.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white"
+                      ) : game.status === "COMPLETED" ? (
+                        <Button disabled className="flex-1 bg-gray-400 text-white font-medium cursor-not-allowed">
+                          <Trophy className="w-4 h-4 mr-2" />
+                          Completed
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => handleStartGame(game.id)}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          Start Game
+                        </Button>
+                      )}
+
+                      <Button
+                        onClick={() => handleEditGame(game.id)}
+                        variant="outline"
+                        size="icon"
+                        className="border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                        disabled={game.status === "STARTED"}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                            disabled={game.status === "STARTED"}
                           >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-white border-slate-200">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Game</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete "{game.game}"? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteGame(game.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>
