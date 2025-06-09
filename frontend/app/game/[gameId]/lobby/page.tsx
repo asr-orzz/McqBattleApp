@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Users, Trophy, Clock, Gamepad2, LogOut, Play, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import pusherClient from "@/lib/pusherClient"
-import { toastSuccess, toastError } from "@/utils/toast"
+import { toastSuccess, toastError, toastInfo } from "@/utils/toast"
 import axios from "axios"
+import { Toaster } from "react-hot-toast"
 
 interface User {
   id: string
@@ -73,6 +74,7 @@ export default function GameLobbyPage() {
   const [questionIndex, setQuestionIndex] = useState<number>(0)
   const [loadingQuestion, setLoadingQuestion] = useState(false)
   const [gameEnded, setGameEnded] = useState(false)
+  const [showingAnswerResult, setShowingAnswerResult] = useState(false)
 
   // Store next question data in a ref to avoid re-renders
   const nextQuestionRef = useRef<Question | null>(null)
@@ -237,6 +239,7 @@ export default function GameLobbyPage() {
 
     setSubmitting(true)
     setSelectedOption(optionId)
+    setShowingAnswerResult(false) // Reset this flag
 
     // Store the current question ID to match with Pusher event
     lastAnsweredQuestionRef.current = currentQuestion.id
@@ -285,18 +288,20 @@ export default function GameLobbyPage() {
         console.log("Fallback timeout triggered - Pusher event might have been missed")
 
         // If we haven't received a Pusher event, show a generic result
-        if (lastAnsweredQuestionRef.current === currentQuestion.id) {
+        if (lastAnsweredQuestionRef.current === currentQuestion.id && !showingAnswerResult) {
           setAnswerResult({
             isCorrect: false, // We don't know, so default to false
             message: "Answer submitted! Moving to next question...",
           })
+          setShowingAnswerResult(true)
+          toastInfo("Answer submitted! Moving to next question...")
 
           // Move to next question after showing result
           setTimeout(() => {
             moveToNextQuestion()
-          }, 1500)
+          }, 2000)
         }
-      }, 3000)
+      }, 5000) // 5 second fallback
     } catch (error) {
       console.error("Error submitting answer:", error)
       toastError("Failed to submit answer")
@@ -333,6 +338,7 @@ export default function GameLobbyPage() {
     setSelectedOption(null)
     setAnswerResult(null)
     setSubmitting(false)
+    setShowingAnswerResult(false)
   }
 
   // Start game
@@ -466,6 +472,10 @@ export default function GameLobbyPage() {
       "player-answered",
       (data: { userId: string; isCorrect: boolean; newScore: number; questionId: string }) => {
         console.log("Player answered event received:", data)
+        console.log("Current user ID:", currentUserId)
+        console.log("Event user ID:", data.userId)
+        console.log("Last answered question:", lastAnsweredQuestionRef.current)
+        console.log("Event question ID:", data.questionId)
 
         // Update player scores for all users
         setGame((prevGame) => {
@@ -481,7 +491,7 @@ export default function GameLobbyPage() {
 
         // Show answer result only to the user who answered
         if (data.userId === currentUserId) {
-          console.log("Showing answer result for current user:", data.isCorrect)
+          console.log("This is the current user's answer")
 
           // Clear any pending timeouts
           if (answerTimeoutRef.current) {
@@ -491,11 +501,21 @@ export default function GameLobbyPage() {
 
           // Check if this is for the question we just answered
           if (lastAnsweredQuestionRef.current === data.questionId) {
+            console.log("Question IDs match, setting answer result")
+
             // Set the answer result based on the Pusher event
             setAnswerResult({
               isCorrect: data.isCorrect,
               message: data.isCorrect ? "✅ Correct answer! +1 point" : "❌ Wrong answer!",
             })
+            setShowingAnswerResult(true)
+
+            // Show toast notification based on answer correctness
+            if (data.isCorrect) {
+              toastSuccess("Correct answer! +1 point")
+            } else {
+              toastError("Wrong answer!")
+            }
 
             // Wait for 2.5 seconds to show the result, then move to next question
             setTimeout(() => {
@@ -535,7 +555,7 @@ export default function GameLobbyPage() {
       }
       pusherClient.unsubscribe(`game-${gameId}`)
     }
-  }, [gameId, router])
+  }, [gameId, router, currentUserId])
 
   // Check authentication
   useEffect(() => {
@@ -582,6 +602,9 @@ export default function GameLobbyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-4 md:p-6">
+      {/* Toast container */}
+      <Toaster position="top-right" />
+
       <div className="container mx-auto max-w-4xl">
         {/* Game Header */}
         <div className="flex flex-col md:flex-row items-center justify-between mb-6 bg-slate-800 rounded-lg p-4 border border-slate-700 shadow-lg">
@@ -795,23 +818,20 @@ export default function GameLobbyPage() {
                         <p className="text-xl text-blue-200">{currentQuestion.question}</p>
                       </div>
 
-                      {answerResult && (
+                      {/* Enhanced answer result display */}
+                      {answerResult && showingAnswerResult && (
                         <div
-                          className={`mb-6 p-4 rounded-lg flex items-center ${
-                            answerResult.isCorrect
-                              ? "bg-green-900/40 border border-green-700"
-                              : "bg-red-900/40 border border-red-700"
+                          className={`mb-6 p-6 rounded-lg flex items-center border-2 ${
+                            answerResult.isCorrect ? "bg-green-900/60 border-green-500" : "bg-red-900/60 border-red-500"
                           }`}
                         >
                           {answerResult.isCorrect ? (
-                            <CheckCircle2 className="h-6 w-6 text-green-400 mr-3" />
+                            <CheckCircle2 className="h-8 w-8 text-green-400 mr-4" />
                           ) : (
-                            <XCircle className="h-6 w-6 text-red-400 mr-3" />
+                            <XCircle className="h-8 w-8 text-red-400 mr-4" />
                           )}
                           <span
-                            className={`text-lg font-medium ${
-                              answerResult.isCorrect ? "text-green-300" : "text-red-300"
-                            }`}
+                            className={`text-xl font-bold ${answerResult.isCorrect ? "text-green-200" : "text-red-200"}`}
                           >
                             {answerResult.message}
                           </span>
@@ -949,3 +969,4 @@ export default function GameLobbyPage() {
     </div>
   )
 }
+
