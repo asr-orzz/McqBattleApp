@@ -85,7 +85,7 @@ export default function GameLobbyPage() {
   const checkGameStatusAndLoad = async () => {
     try {
       // Use your status endpoint
-      const statusResponse = await fetch(`http://localhost:3001/api/v1/games/${gameId}/status`)
+      const statusResponse = await fetch(`mcqbattleapp-production.up.railway.app/api/v1/games/${gameId}/status`)
       const statusData: GameStatusResponse = await statusResponse.json()
 
       const token = localStorage.getItem("Authorization")
@@ -148,7 +148,7 @@ export default function GameLobbyPage() {
   // Lightweight status check for periodic updates
   const quickStatusCheck = async () => {
     try {
-      const statusResponse = await fetch(`http://localhost:3001/api/v1/games/${gameId}/status`)
+      const statusResponse = await fetch(`mcqbattleapp-production.up.railway.app/api/v1/games/${gameId}/status`)
 
       if (!statusResponse.ok) return
 
@@ -204,7 +204,7 @@ export default function GameLobbyPage() {
 
       console.log("Fetching first question...")
       const response = await axios.post(
-        `http://localhost:3001/api/v1/players/first-question?gameId=${gameId}`,
+        `mcqbattleapp-production.up.railway.app/api/v1/players/first-question?gameId=${gameId}`,
         {}, // Empty body
         {
           headers: {
@@ -252,7 +252,7 @@ export default function GameLobbyPage() {
       }
 
       console.log(`Submitting answer for question ${currentQuestion.id}, option: ${optionId}`)
-      const response = await fetch("http://localhost:3001/api/v1/players/player-answer", {
+      const response = await fetch("mcqbattleapp-production.up.railway.app/api/v1/players/player-answer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -353,7 +353,7 @@ export default function GameLobbyPage() {
         return
       }
 
-      const response = await fetch(`http://localhost:3001/api/v1/games/${gameId}/start`, {
+      const response = await fetch(`mcqbattleapp-production.up.railway.app/api/v1/games/${gameId}/start`, {
         method: "PATCH",
         headers: {
           Authorization: token,
@@ -389,7 +389,7 @@ export default function GameLobbyPage() {
         return
       }
 
-      const response = await fetch("http://localhost:3001/api/players/player-leave", {
+      const response = await fetch("mcqbattleapp-production.up.railway.app/api/players/player-leave", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -446,7 +446,7 @@ export default function GameLobbyPage() {
       if (token && userId) {
         try {
           // Get fresh game status to ensure we have the latest player data
-          const statusResponse = await fetch(`http://localhost:3001/api/v1/games/${gameId}/status`)
+          const statusResponse = await fetch(`mcqbattleapp-production.up.railway.app/api/v1/games/${gameId}/status`)
           if (statusResponse.ok) {
             const statusData: GameStatusResponse = await statusResponse.json()
             const isPlayer = statusData.players.some((player) => player.id === userId)
