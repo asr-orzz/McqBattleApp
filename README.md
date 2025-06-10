@@ -166,15 +166,4 @@ Feel free to fork this repo and contribute via pull requests! Let’s build the 
 
 For issues or suggestions, feel free to reach out via GitHub Issues or contact the maintainer directly.
 
----
 
-## 📜 License
-
-This project is licensed under the MIT License.
-
-```
-
----
-
-Let me know if you want me to generate this file and upload it into your GitHub repo directly via a PR or help with the `.env` example templates.
-```
