@@ -143,16 +143,7 @@ The frontend will run on `http://localhost:3000`.
 ## 📦 Deployment
 
 * **Frontend:** Deployed to [Vercel](https://vercel.com/)
-* **Backend:** Deployed on Render, Railway, or custom VPS
-
----
-
-## 🛠️ Coming Soon
-
-* Score history tracking
-* Public vs Private game modes
-* In-game chat
-* Mobile responsiveness
+* **Backend:** Deployed on Railway
 
 ---
 
