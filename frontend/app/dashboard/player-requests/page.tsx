@@ -142,20 +142,22 @@ export default function PlayerRequestsPage() {
     if (!authorized || requests.length === 0) return
 
     const channels = requests.map((request) => {
-      const channel = pusherClient.subscribe(`request-${request.id}`)
+      // Use a combination of request ID and a timestamp to ensure uniqueness
+      const channelName = `request-${request.id}`
+      const channel = pusherClient.subscribe(channelName)
 
       channel.bind("request-cancelled", (data: { requestId: string; userId: string; status: string }) => {
         // Remove the cancelled request from the requests list
         setRequests((prev) => prev.filter((req) => req.id !== data.requestId))
       })
 
-      return channel
+      return { name: channelName, channel }
     })
 
     // Clean up subscriptions on unmount
     return () => {
-      channels.forEach((channel) => {
-        pusherClient.unsubscribe(channel.name)
+      channels.forEach((channelInfo) => {
+        pusherClient.unsubscribe(channelInfo.name)
       })
     }
   }, [authorized, requests])
@@ -281,9 +283,9 @@ export default function PlayerRequestsPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {pendingRequests.map((request) => (
+                    {pendingRequests.map((request, index) => (
                       <div
-                        key={request.id}
+                        key={`pending-${request.id}-${index}`}
                         className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                       >
                         <div className="flex-1">
@@ -342,9 +344,9 @@ export default function PlayerRequestsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {processedRequests.map((request) => (
+                    {processedRequests.map((request, index) => (
                       <div
-                        key={request.id}
+                        key={`processed-${request.id}-${index}`}
                         className="flex items-center justify-between p-4 border border-slate-200 rounded-lg bg-slate-25 opacity-75"
                       >
                         <div className="flex-1">

@@ -326,9 +326,12 @@ export default function MyGamesPage() {
                           End Game
                         </Button>
                       ) : game.status === "COMPLETED" ? (
-                        <Button disabled className="flex-1 bg-gray-400 text-white font-medium cursor-not-allowed">
+                        <Button
+                          onClick={() => router.push(`/leaderboard/${game.id}`)}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium"
+                        >
                           <Trophy className="w-4 h-4 mr-2" />
-                          Completed
+                          View Results
                         </Button>
                       ) : (
                         <Button

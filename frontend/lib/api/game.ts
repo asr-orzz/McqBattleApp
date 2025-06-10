@@ -57,6 +57,7 @@ export const getAllMyGames = async (token: string) => {
   },authHeader(token));
   return res.data;
 };
+
 export const getAllGames = async () => {
   const res = await axios.get('/games');
   return res.data;

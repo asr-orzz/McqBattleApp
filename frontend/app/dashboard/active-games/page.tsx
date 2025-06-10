@@ -11,7 +11,7 @@ import pusherClient from "@/lib/pusherClient"
 import { toastPromise, toastSuccess, toastError } from "@/utils/toast"
 import { getAllGames } from "@/lib/api/game"
 import { sendPlayerRequest } from "@/lib/api/player"
-import Pusher from "pusher-js"
+import { getMyPlayerRequests } from "@/lib/api/player"
 
 interface Player {
   id: string
@@ -54,7 +54,6 @@ export default function ActiveGamesPage() {
   const [joiningGame, setJoiningGame] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<{ id: string; username: string } | null>(null)
   const [requestStatus, setRequestStatus] = useState<RequestStatus>({})
-  const [pusher, setPusher] = useState<Pusher | null>(null)
 
   const fetchActiveGames = async () => {
     setLoading(true)
@@ -68,6 +67,7 @@ export default function ActiveGamesPage() {
         return
       }
 
+      // Fetch all games
       const response = await getAllGames()
       const data = await response
 
@@ -76,16 +76,41 @@ export default function ActiveGamesPage() {
 
       setGames(waitingGames)
 
-      // After setGames(waitingGames), add:
+      // Fetch user's existing requests
+      const myRequestsData = await getMyPlayerRequests(token)
+      const myRequests = myRequestsData || []
+
+      // Set initial request status based on player status and existing requests
       const initialRequestStatus: RequestStatus = {}
       waitingGames.forEach((game: Game) => {
         const isPlayer = game.players?.some((player) => player.userId === userId)
+
         if (isPlayer) {
           initialRequestStatus[game.id] = "player"
         } else {
-          initialRequestStatus[game.id] = "none"
+          // Check if user has an existing request for this game
+          const existingRequest = myRequests.find((req: any) => req.gameId === game.id)
+
+          if (existingRequest) {
+            switch (existingRequest.status) {
+              case "PENDING":
+                initialRequestStatus[game.id] = "pending"
+                break
+              case "APPROVED":
+                initialRequestStatus[game.id] = "approved"
+                break
+              case "REJECTED":
+                initialRequestStatus[game.id] = "rejected"
+                break
+              default:
+                initialRequestStatus[game.id] = "none"
+            }
+          } else {
+            initialRequestStatus[game.id] = "none"
+          }
         }
       })
+
       setRequestStatus(initialRequestStatus)
     } catch (error) {
       console.error("Error fetching active games:", error)
@@ -104,19 +129,13 @@ export default function ActiveGamesPage() {
     } else {
       setAuthorized(true)
       setCurrentUser({ id: userId, username })
+      fetchActiveGames()
     }
   }, [router])
 
-  // Fetch games when currentUser is set
-  useEffect(() => {
-    if (currentUser) {
-      fetchActiveGames()
-    }
-  }, [currentUser])
-
   // Set up Pusher subscription for general game events
   useEffect(() => {
-    if (!authorized) return
+    if (!authorized || !currentUser) return
 
     const channel = pusherClient.subscribe("games")
 
@@ -139,7 +158,7 @@ export default function ActiveGamesPage() {
         }
 
         // Only add if it's not the current user's game
-        if (newGame.userId !== currentUser?.id) {
+        if (newGame.userId !== currentUser.id) {
           setGames((prevGames) => {
             const gameExists = prevGames.some((game) => game.id === newGame.id)
             if (!gameExists) {
@@ -173,75 +192,65 @@ export default function ActiveGamesPage() {
     }
   }, [authorized, currentUser])
 
-  // Set up Pusher subscriptions for individual game channels
+  // Set up Pusher subscriptions for individual game channels - similar to my-requests page
   useEffect(() => {
-    if (games.length > 0 && currentUser && !pusher) {
-      const pusherClient = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    if (!authorized || !currentUser || games.length === 0) return
+
+    const gameIds = [...new Set(games.map((game) => game.id))]
+
+    // Subscribe to game channels for both approval and rejection notifications
+    const gameChannels = gameIds.map((gameId) => {
+      const channel = pusherClient.subscribe(`game-${gameId}`)
+
+      // Listen for when the user's request is approved
+      channel.bind("player-approved", (data: { userId: string }) => {
+        console.log("Player approved event received:", data)
+
+        if (data.userId === currentUser.id) {
+          // Update the request status to approved
+          setRequestStatus((prev) => ({
+            ...prev,
+            [gameId]: "approved",
+          }))
+
+          // Find the game name for the toast
+          const approvedGame = games.find((game) => game.id === gameId)
+          if (approvedGame) {
+            toastSuccess(`Your request to join "${approvedGame.game}" has been approved!`)
+          }
+        }
       })
 
-      setPusher(pusherClient)
+      // Listen for when a player request is rejected
+      channel.bind(
+        "player-rejected",
+        (data: { requestId: string; userId: string; gameId: string; message: string }) => {
+          console.log("Player rejected event received:", data)
 
-      // Subscribe to each game's channel to listen for player events
-      games.forEach((game) => {
-        const channel = pusherClient.subscribe(`game-${game.id}`)
-
-        // Listen for player approval
-        channel.bind("player-approved", (data: { userId: string }) => {
-          console.log("Player approved event received:", data)
-
-          // Check if the approved user is the current user
-          if (data.userId === currentUser.id) {
+          // Check if the rejected user is the current user
+          if (data.userId === currentUser.id && data.gameId === gameId) {
+            // Update the request status to rejected
             setRequestStatus((prev) => ({
               ...prev,
-              [game.id]: "approved",
+              [gameId]: "rejected",
             }))
 
-            toastSuccess(`Your request to join "${game.game}" has been approved!`)
+            // Show the exact message from the backend
+            toastError(data.message || "Your request was rejected.")
           }
-        })
+        },
+      )
 
-        channel.bind(
-          "player-rejected",
-          (data: {
-            requestId: string
-            userId: string
-            gameId: string
-            message: string
-          }) => {
-            console.log("Player rejected event received:", data)
+      return channel
+    })
 
-            // Check if the rejected user is the current user
-            if (data.userId === currentUser.id) {
-              setRequestStatus((prev) => ({
-                ...prev,
-                [data.gameId]: "rejected",
-              }))
-
-              toastError(data.message || "Your request was rejected.")
-            }
-          },
-        )
-      })
-
-      // Cleanup function
-      return () => {
-        games.forEach((game) => {
-          pusherClient.unsubscribe(`game-${game.id}`)
-        })
-        pusherClient.disconnect()
-      }
-    }
-  }, [games, currentUser, pusher])
-
-  // Cleanup Pusher on component unmount
-  useEffect(() => {
+    // Clean up subscriptions on unmount
     return () => {
-      if (pusher) {
-        pusher.disconnect()
-      }
+      gameChannels.forEach((channel) => {
+        pusherClient.unsubscribe(channel.name)
+      })
     }
-  }, [pusher])
+  }, [authorized, currentUser, games])
 
   if (authorized === null) return null
 
@@ -385,6 +394,14 @@ export default function ActiveGamesPage() {
               Join waiting games and start battling! {games.length} game{games.length !== 1 ? "s" : ""} available
             </p>
           </div>
+          <Button
+            onClick={fetchActiveGames}
+            variant="outline"
+            className="border-slate-200 text-slate-700"
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </Button>
         </div>
 
         {loading ? (
