@@ -86,7 +86,6 @@ export default function GameLobbyPage() {
     try {
       // Use your status endpoint
       const statusResponse = await fetch(`http://localhost:3001/api/v1/games/${gameId}/status`)
-
       const statusData: GameStatusResponse = await statusResponse.json()
 
       const token = localStorage.getItem("Authorization")
