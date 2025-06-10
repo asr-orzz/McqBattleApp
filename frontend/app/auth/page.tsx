@@ -318,7 +318,7 @@ const handleSignUpSubmit = async (e: React.FormEvent) => {
                           Remember me
                         </Label>
                       </div>
-                      <Link href="#" className="text-sm text-blue-600 hover:text-blue-700">
+                      <Link href="/forget-password" className="text-sm text-blue-600 hover:text-blue-700">
                         Forgot password?
                       </Link>
                     </div>
