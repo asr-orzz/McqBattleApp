@@ -1,8 +1,4 @@
-Here is a complete `README.md` file for your **McqBattleApp** project, combining both backend and frontend setup instructions in one clear and professional document:
 
----
-
-```markdown
 # 🧠 McqBattleApp
 
 A real-time multiplayer MCQ battle game where users can challenge each other, join private rooms, and play quiz battles with live question delivery and scoring. Built with a modern stack — Express, Prisma, PostgreSQL, Pusher, and Next.js.
