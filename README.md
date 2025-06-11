@@ -12,7 +12,7 @@ A real-time multiplayer MCQ battle game where users can challenge each other, jo
 - **Real-Time Communication:** Pusher
 - **Authentication:** JWT
 - **Email Service:** Gmail SMTP
-- **Deployment:** Vercel (Frontend), Render/Other (Backend)
+- **Deployment:** Vercel (Frontend), Render (Backend)
 
 ---
 
@@ -33,7 +33,7 @@ mcq-battle-app/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/McqBattleApp.git
+git clone https://github.com/asr-orzz/McqBattleApp
 cd McqBattleApp
 ````
 
