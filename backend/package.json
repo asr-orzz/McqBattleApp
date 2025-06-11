@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "build": "tsc",
-    "start": "tsc -b & node dist/index.js",
+    "start": "tsc -b && node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:dbpush": "prisma db push"
   },
