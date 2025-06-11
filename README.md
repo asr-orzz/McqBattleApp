@@ -143,7 +143,7 @@ The frontend will run on `http://localhost:3000`.
 ## 📦 Deployment
 
 * **Frontend:** Deployed to [Vercel](https://vercel.com/)
-* **Backend:** Deployed on Railway
+* **Backend:** Deployed on Render
 
 ---
 
