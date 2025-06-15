@@ -26,7 +26,7 @@ export default function Navbar() {
   return (
     <header className="px-4 lg:px-6 h-16 flex items-center border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50 shadow-sm">
       {/* Logo */}
-      <Link className="flex items-center justify-center pr-100" href="/dashboard">
+      <Link className="flex items-center justify-center pr-100" href="/">
         <Gamepad2 className="h-8 w-8 text-blue-600" />
         <span className="ml-2 text-2xl font-bold text-slate-900">QuizBattle</span>
       </Link>
