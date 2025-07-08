@@ -24,6 +24,9 @@ app.use("/api/v1/options", optionRouter);
 app.use("/api/v1/players", playerRouter);
 app.use("/api/v1/playerRequest", playerRequestRouter);
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 function main() {
   app.listen(3001, () => {
     console.log('Server is running on http://localhost:3001');
