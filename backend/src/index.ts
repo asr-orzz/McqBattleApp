@@ -13,7 +13,7 @@ import { playerRequestRouter } from "./routes/playerRequest";
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: "https://mcq-battle-app.vercel.app",
+  origin: process.env.FRONTEND_URL || "https://mcq-battle-app.vercel.app",
   credentials: true
 }));
 
@@ -36,8 +36,9 @@ app.get("/health", (req, res) => {
 });
 
 function main() {
-  app.listen(3001, () => {
-    console.log('Server is running on http://localhost:3001');
+  const port = process.env.PORT || 3001;
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
   });
 }
 

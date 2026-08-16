@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge"
 import { Users, Trophy, Clock, Gamepad2, LogOut, Play, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import pusherClient from "@/lib/pusherClient"
 import { toastSuccess, toastError, toastInfo } from "@/utils/toast"
-import axios from "axios"
+import axiosInstance from "@/lib/api/axiosInstance"
 import { Toaster } from "react-hot-toast"
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://mcqbattleapp.onrender.com/api/v1"
 
 interface User {
   id: string
@@ -85,7 +87,7 @@ export default function GameLobbyPage() {
   const checkGameStatusAndLoad = async () => {
     try {
       // Use your status endpoint
-      const statusResponse = await fetch(`https://mcqbattleapp.onrender.com/api/v1/games/${gameId}/status`)
+      const statusResponse = await fetch(`${API_BASE}/games/${gameId}/status`)
       const statusData: GameStatusResponse = await statusResponse.json()
 
       const token = localStorage.getItem("Authorization")
@@ -148,7 +150,7 @@ export default function GameLobbyPage() {
   // Lightweight status check for periodic updates
   const quickStatusCheck = async () => {
     try {
-      const statusResponse = await fetch(`https://mcqbattleapp.onrender.com/api/v1/games/${gameId}/status`)
+      const statusResponse = await fetch(`${API_BASE}/games/${gameId}/status`)
 
       if (!statusResponse.ok) return
 
@@ -203,13 +205,12 @@ export default function GameLobbyPage() {
       }
 
       console.log("Fetching first question...")
-      const response = await axios.post(
-        `https://mcqbattleapp.onrender.com/api/v1/players/first-question?gameId=${gameId}`,
-        {}, // Empty body
+      const response = await axiosInstance.post(
+        `/players/first-question?gameId=${gameId}`,
+        {},
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Ensure it's prefixed with 'Bearer'
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         },
       )
@@ -252,7 +253,7 @@ export default function GameLobbyPage() {
       }
 
       console.log(`Submitting answer for question ${currentQuestion.id}, option: ${optionId}`)
-      const response = await fetch("https://mcqbattleapp.onrender.com/api/v1/players/player-answer", {
+      const response = await fetch("${API_BASE}/players/player-answer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -353,10 +354,10 @@ export default function GameLobbyPage() {
         return
       }
 
-      const response = await fetch(`https://mcqbattleapp.onrender.com/api/v1/games/${gameId}/start`, {
+      const response = await fetch(`${API_BASE}/games/${gameId}/start`, {
         method: "PATCH",
         headers: {
-          Authorization: token,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -389,7 +390,7 @@ export default function GameLobbyPage() {
         return
       }
 
-      const response = await fetch("https://mcqbattleapp.onrender.com/api/players/player-leave", {
+      const response = await fetch(`${API_BASE}/players/player-leave`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -446,7 +447,7 @@ export default function GameLobbyPage() {
       if (token && userId) {
         try {
           // Get fresh game status to ensure we have the latest player data
-          const statusResponse = await fetch(`https://mcqbattleapp.onrender.com/api/v1/games/${gameId}/status`)
+          const statusResponse = await fetch(`${API_BASE}/games/${gameId}/status`)
           if (statusResponse.ok) {
             const statusData: GameStatusResponse = await statusResponse.json()
             const isPlayer = statusData.players.some((player) => player.id === userId)
