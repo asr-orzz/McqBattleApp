@@ -103,7 +103,7 @@ gameRouter.post("/my-games", userMiddleware, async (req, res) => {
 });
 
 gameRouter.delete("/delete/:gameId", userMiddleware, async (req, res) => {
-  const gameId = req.params.gameId;
+  const gameId = req.params.gameId as string;
   const userId = req.body.userId; 
 
   if (!gameId || !userId) {
@@ -147,7 +147,7 @@ gameRouter.delete("/delete/:gameId", userMiddleware, async (req, res) => {
 });
 
 gameRouter.post("/:gameId", userMiddleware, async (req, res) => {
-  const { gameId } = req.params;
+  const gameId = req.params.gameId as string;
   const userId = req.body.userId;
 
   if (!gameId || !userId) {
@@ -216,7 +216,7 @@ gameRouter.post("/:gameId", userMiddleware, async (req, res) => {
   }
 });
 gameRouter.put("/:gameId", userMiddleware, async (req, res) => {
-  const { gameId } = req.params;
+  const gameId = req.params.gameId as string;
   const { userId, newName } = req.body;
 
   if (!newName || !userId) {
@@ -257,7 +257,7 @@ gameRouter.put("/:gameId", userMiddleware, async (req, res) => {
 });
 
 gameRouter.get("/:gameId/status", async (req, res) => {
-  const { gameId } = req.params;
+  const gameId = req.params.gameId as string;
 
   if (!gameId) {
     res.status(400).json({ error: "Missing gameId" });
@@ -306,7 +306,7 @@ gameRouter.get("/:gameId/status", async (req, res) => {
   }
 });
 gameRouter.patch("/:gameId/start", userMiddleware, async (req, res) => {
-  const { gameId } = req.params;
+  const gameId = req.params.gameId as string;
   const { userId } = req.body;
 
   if (!gameId || !userId) {
@@ -349,7 +349,7 @@ gameRouter.patch("/:gameId/start", userMiddleware, async (req, res) => {
   }
 });
 gameRouter.patch("/:gameId/end", userMiddleware, async (req, res) => {
-  const { gameId } = req.params;
+  const gameId = req.params.gameId as string;
   const { userId } = req.body;
 
   if (!gameId || !userId) {

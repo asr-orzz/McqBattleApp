@@ -9,7 +9,7 @@ playerRequestRouter.use(userMiddleware);
 
 playerRequestRouter.post("/makeRequest/:gameId", async (req, res) => {
   const userId = req.body.userId;
-  const { gameId } = req.params;
+  const gameId = req.params.gameId as string;
 
   try {
     const game = await prisma.game.findUnique({ where: { id: gameId } });
@@ -48,7 +48,7 @@ playerRequestRouter.post("/makeRequest/:gameId", async (req, res) => {
 
 playerRequestRouter.post("/game/:gameId", async (req, res) => {
   const userId = req.body.userId;
-  const { gameId } = req.params;
+  const gameId = req.params.gameId as string;
 
   const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game || game.userId !== userId) {
@@ -66,7 +66,7 @@ playerRequestRouter.post("/game/:gameId", async (req, res) => {
 
 playerRequestRouter.patch("/:requestId/approve", async (req, res) => {
   const userId = req.body.userId;
-  const { requestId } = req.params;
+  const requestId = req.params.requestId as string;
 
   const request = await prisma.playerRequest.findUnique({
     where: { id: requestId },
@@ -102,7 +102,7 @@ playerRequestRouter.patch("/:requestId/approve", async (req, res) => {
 });
 playerRequestRouter.patch("/:requestId/reject", async (req, res) => {
   const userId = req.body.userId;
-  const { requestId } = req.params;
+  const requestId = req.params.requestId as string;
 
   try {
     const request = await prisma.playerRequest.findUnique({
@@ -146,7 +146,7 @@ playerRequestRouter.patch("/:requestId/reject", async (req, res) => {
 
 playerRequestRouter.post("/delete/:requestId", async (req, res) => {
   const userId = req.body.userId;
-  const { requestId } = req.params;
+  const requestId = req.params.requestId as string;
 
   const request = await prisma.playerRequest.findUnique({
     where: { id: requestId },

@@ -128,7 +128,7 @@ playerRouter.post("/player-answer", userMiddleware, async (req, res) => {
   }
 });
 playerRouter.post("/first-question", userMiddleware, async (req, res) => {
-  const { gameId } = req.query;
+  const gameId = req.query.gameId as string;
   const userId = req.body.userId;
   if (!gameId) {
      res.status(400).json({ error: "Missing gameId" });
@@ -137,7 +137,7 @@ playerRouter.post("/first-question", userMiddleware, async (req, res) => {
 
   try {
     const game = await prisma.game.findUnique({
-      where: { id: String(gameId) },
+      where: { id: gameId },
       include: {
         questions: { orderBy: { createdAt: "asc" } },
       },
@@ -151,7 +151,7 @@ playerRouter.post("/first-question", userMiddleware, async (req, res) => {
     const alreadyAnswered = await prisma.userAnswer.findMany({
       where: {
         userId,
-        gameId: String(gameId),
+        gameId: gameId,
       },
     });
 
@@ -236,7 +236,7 @@ playerRouter.post("/player-leave", userMiddleware, async (req, res) => {
 });
 
 playerRouter.get("/next-question", userMiddleware, async (req, res) => {
-  const { gameId } = req.query;
+  const gameId = req.query.gameId as string;
   const userId = req.body.userId;
 
   if (!gameId) {
@@ -246,7 +246,7 @@ playerRouter.get("/next-question", userMiddleware, async (req, res) => {
 
   try {
     const game = await prisma.game.findUnique({
-      where: { id: String(gameId) },
+      where: { id: gameId },
       include: { questions: { orderBy: { createdAt: "asc" } } },
     });
 
@@ -263,7 +263,7 @@ playerRouter.get("/next-question", userMiddleware, async (req, res) => {
     const isPlayer = await prisma.player.findFirst({
       where: {
         userId,
-        gameId: String(gameId),
+        gameId: gameId,
       },
     });
 
@@ -275,7 +275,7 @@ playerRouter.get("/next-question", userMiddleware, async (req, res) => {
     const answered = await prisma.userAnswer.findMany({
       where: {
         userId,
-        gameId: String(gameId),
+        gameId: gameId,
       },
     });
 

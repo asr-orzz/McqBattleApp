@@ -48,7 +48,7 @@ optionRouter.post("/create", userMiddleware, async (req, res) => {
 });
 
 optionRouter.put("/:id", async (req, res) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { option, isCorrect } = req.body;
   const userId = req.body.userId;
 
@@ -95,7 +95,7 @@ optionRouter.put("/:id", async (req, res) => {
 
 
 optionRouter.post("/delete/:id", async (req, res) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const userId = req.body.userId;
 
   try {

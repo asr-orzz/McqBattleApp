@@ -48,7 +48,7 @@ questionRouter.post("/create", async (req, res) => {
 });
 
 questionRouter.get("/", async (req, res) => {
-  const { gameId } = req.query;
+  const gameId = req.query.gameId as string;
   const userId = req.body.userId;
 
   if (!gameId) {
@@ -58,7 +58,7 @@ questionRouter.get("/", async (req, res) => {
 
   try {
     const game = await prisma.game.findUnique({
-      where: { id: String(gameId) },
+      where: { id: gameId },
     });
 
     if (!game) {
@@ -72,7 +72,7 @@ questionRouter.get("/", async (req, res) => {
     }
 
     const questions = await prisma.question.findMany({
-      where: { gameId: String(gameId) },
+      where: { gameId: gameId },
     });
 
      res.json(questions);
@@ -85,7 +85,7 @@ questionRouter.get("/", async (req, res) => {
 });
 
 questionRouter.put("/:id", userMiddleware, async (req, res) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { question, explanation } = req.body;
   const userId = req.body.userId;
 
@@ -125,7 +125,7 @@ questionRouter.put("/:id", userMiddleware, async (req, res) => {
 });
 
 questionRouter.post("/delete/:id", userMiddleware, async (req, res) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   const userId = req.body.userId;
 
   try {
