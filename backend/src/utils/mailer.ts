@@ -40,12 +40,20 @@ async function sendViaSmtp(email: string, otp: string, username: string) {
 }
 
 async function sendViaApi(email: string, otp: string, username: string) {
+  // Prefer dedicated API key; xsmtpsib- SMTP keys do not work with the REST API.
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
   const senderName = process.env.BREVO_SENDER_NAME || "MCQ Battle";
 
   if (!apiKey || !senderEmail) {
     throw new Error("BREVO_API_KEY and BREVO_SENDER_EMAIL must be set");
+  }
+
+  if (!apiKey.startsWith("xkeysib-")) {
+    throw new Error(
+      "BREVO_API_KEY must be an API key (xkeysib-...), not an SMTP key (xsmtpsib-...). " +
+        "Create one in Brevo → SMTP & API → API Keys. Render blocks SMTP ports."
+    );
   }
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -71,15 +79,21 @@ async function sendViaApi(email: string, otp: string, username: string) {
 }
 
 export async function sendOtpEmail(email: string, otp: string, username: string) {
-  const key = process.env.BREVO_API_KEY || process.env.BREVO_SMTP_KEY || "";
-  const useSmtp = key.startsWith("xsmtpsib-") || Boolean(process.env.BREVO_SMTP_LOGIN);
+  const apiKey = process.env.BREVO_API_KEY || "";
+  // Prefer HTTPS API — Render (and many hosts) block outbound SMTP on 25/465/587.
+  const preferApi = apiKey.startsWith("xkeysib-") || process.env.BREVO_USE_API === "true";
+  const useSmtp =
+    !preferApi &&
+    (apiKey.startsWith("xsmtpsib-") ||
+      Boolean(process.env.BREVO_SMTP_KEY) ||
+      Boolean(process.env.BREVO_SMTP_LOGIN));
 
   try {
-    if (useSmtp) {
-      await sendViaSmtp(email, otp, username);
+    if (preferApi || !useSmtp) {
+      await sendViaApi(email, otp, username);
       return;
     }
-    await sendViaApi(email, otp, username);
+    await sendViaSmtp(email, otp, username);
   } catch (error) {
     console.error("Error sending OTP email:", error instanceof Error ? error.message : error);
     throw new Error("Failed to send OTP email");

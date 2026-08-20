@@ -12,8 +12,14 @@ import { playerRequestRouter } from "./routes/playerRequest";
 
 const app = express();
 app.use(express.json());
+
+// Browser Origin never has a trailing slash; normalize so env typos don't break CORS.
+const allowedOrigin = (
+  process.env.FRONTEND_URL || "https://mcq-battle-app.vercel.app"
+).replace(/\/$/, "");
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "https://mcq-battle-app.vercel.app",
+  origin: allowedOrigin,
   credentials: true
 }));
 
