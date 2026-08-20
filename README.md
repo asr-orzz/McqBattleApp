@@ -1,165 +1,207 @@
+# QuizBattle (McqBattleApp)
 
-# 🧠 McqBattleApp
+Real-time multiplayer MCQ battles: create a room, invite players, generate questions with AI, and compete with live scoring.
 
-A real-time multiplayer MCQ battle game where users can challenge each other, join private rooms, and play quiz battles with live question delivery and scoring. Built with a modern stack — Express, Prisma, PostgreSQL, Pusher, and Next.js.
-
----
-
-## 🔧 Tech Stack
-
-- **Frontend:** Next.js, Tailwind CSS, Pusher
-- **Backend:** Node.js, Express.js, Prisma, PostgreSQL
-- **Real-Time Communication:** Pusher
-- **Authentication:** JWT
-- **Email Service:** Brevo (transactional email)
-- **Question Generation:** Groq LLM API
-- **Deployment:** Vercel (Frontend), Render (Backend)
+**Live app:** [mcq-battle-app.vercel.app](https://mcq-battle-app.vercel.app/)  
+**API:** [mcqbattleapp.onrender.com](https://mcqbattleapp.onrender.com/health)
 
 ---
 
-## 📦 Folder Structure
+## Tech stack
+
+| Layer | Stack |
+| --- | --- |
+| Frontend | Next.js, Tailwind CSS, Pusher JS |
+| Backend | Node.js, Express, Prisma, PostgreSQL |
+| Realtime | Pusher |
+| Auth | JWT + email OTP (Brevo) |
+| AI questions | Groq LLM API |
+| Hosting | Vercel (frontend), Render (backend) |
+
+---
+
+## Project structure
 
 ```
-
-mcq-battle-app/
-├── backend/
-└── frontend/
-
-````
+McqBattleApp/
+├── backend/     # Express API + Prisma
+└── frontend/    # Next.js app (QuizBattle UI)
+```
 
 ---
 
-## 🚀 Getting Started Locally
+## Features
 
-### 1. Clone the repository
+- Email signup with OTP verification (Brevo)
+- Create private games and approve join requests
+- AI question generation from a topic (Groq), plus manual questions
+- Live lobby with shareable Game ID
+- Real-time battle play via Pusher (answers, scores, game start/end)
+- Live leaderboard during play and final results
+- Played Games review: your answers, correct options, explanations, and standings
+
+---
+
+## Local setup
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database (local or hosted, e.g. Neon)
+- Accounts: [Pusher](https://pusher.com), [Brevo](https://app.brevo.com), [Groq](https://console.groq.com)
+
+### 1. Clone
 
 ```bash
 git clone https://github.com/asr-orzz/McqBattleApp
 cd McqBattleApp
-````
+```
 
----
-
-## ⚙️ Backend Setup
-
-### Step 1: Navigate to the backend directory
+### 2. Backend
 
 ```bash
 cd backend
-```
-
-### Step 2: Install dependencies
-
-```bash
 npm install
-```
-
-### Step 3: Create your `.env` file
-
-Copy the example file:
-
-```bash
 cp .env.example .env
 ```
 
-Fill in the following values in `.env`:
+Fill `backend/.env`:
 
 ```env
-DATABASE_URL=""               # PostgreSQL connection string
-USER_JWT_SECRET_KEY=""        # Secret key for JWT signing
-PUSHER_APP_ID=""              # From your Pusher dashboard
+DATABASE_URL=""
+USER_JWT_SECRET_KEY=""
+PUSHER_APP_ID=""
 PUSHER_KEY=""
 PUSHER_SECRET=""
 PUSHER_CLUSTER=""
-OTP_SECRET=""                 # Any random string used for OTP encryption
-BREVO_API_KEY=""              # From https://app.brevo.com (SMTP & API → API Keys)
-BREVO_SENDER_EMAIL=""         # Must be a verified sender in Brevo
+OTP_SECRET=""
+FRONTEND_URL="http://localhost:3000"
+
+# Must be an API key starting with xkeysib- (NOT an SMTP xsmtpsib- key).
+# Create at Brevo → SMTP & API → API Keys.
+# Verify BREVO_SENDER_EMAIL as a sender in Brevo.
+BREVO_API_KEY=""
+BREVO_SENDER_EMAIL=""
 BREVO_SENDER_NAME="MCQ Battle"
-GROQ_API_KEY=""               # From https://console.groq.com
+
+GROQ_API_KEY=""
 GROQ_MODEL="openai/gpt-oss-20b"
 ```
 
-### Step 4: Run database migrations (if using Prisma)
+Generate Prisma client and push schema:
 
 ```bash
 npx prisma generate
-npx prisma migrate dev
+npx prisma db push
 ```
 
-### Step 5: Start the backend server
-
-```bash
-npm run start
-```
-
-The backend should now be running on `http://localhost:3001` (or your configured port).
-
----
-
-## 🌐 Frontend Setup
-
-### Step 1: Navigate to the frontend directory
-
-```bash
-cd ../frontend
-```
-
-### Step 2: Install dependencies
-
-```bash
-npm install
-```
-
-### Step 3: Create your `.env.local` file
-
-```bash
-touch .env.local
-```
-
-Fill in the following environment variables:
-
-```env
-NEXT_PUBLIC_PUSHER_KEY=""     # Same as PUSHER_KEY from backend
-NEXT_PUBLIC_PUSHER_CLUSTER="" # Same as PUSHER_CLUSTER
-```
-
-### Step 4: Run the frontend dev server
+Start the API (dev with reload):
 
 ```bash
 npm run dev
 ```
 
-The frontend will run on `http://localhost:3000`.
+API runs at `http://localhost:3001`. Health check: `GET /health`.
+
+### 3. Frontend
+
+```bash
+cd ../frontend
+npm install
+```
+
+Create `frontend/.env` (or `.env.local`):
+
+```env
+NEXT_PUBLIC_API_BASE_URL="http://localhost:3001/api/v1"
+NEXT_PUBLIC_PUSHER_KEY=""      # same as backend PUSHER_KEY
+NEXT_PUBLIC_PUSHER_CLUSTER=""  # same as backend PUSHER_CLUSTER
+```
+
+Start the UI:
+
+```bash
+npm run dev
+```
+
+App runs at `http://localhost:3000`.
 
 ---
 
-## ✅ Features
+## Brevo email (OTP) — important
 
-* 🔐 Secure Signup & Login with JWT
-* 📩 OTP Verification via Email (Brevo)
-* ✨ AI-generated quiz questions from a topic
-* 👥 Real-Time 1v1 Multiplayer Matchmaking
-* 🧠 Live MCQ Questions with Timed Answers
-* 📊 Game Stats & Leaderboard (optional)
-* 🔒 Private Games with Invite System
+OTP signup fails if Brevo is misconfigured. Checklist:
 
----
-
-## 📦 Deployment
-
-* **Frontend:** Deployed to [Vercel](https://vercel.com/)
-* **Backend:** Deployed on Render
+1. Use an **API key** (`xkeysib-...`), not an SMTP key (`xsmtpsib-...`).
+2. Verify **BREVO_SENDER_EMAIL** in Brevo → Senders.
+3. If Brevo has **Authorised IPs** enabled, either add your IP or **turn IP restriction off**.  
+   Render’s outbound IPs change on free plans, so IP allowlists break production OTP.
+4. On Render, set the same Brevo vars and redeploy after changes. SMTP ports are blocked on Render; the app uses Brevo’s HTTPS API.
 
 ---
 
-## 🤝 Contributing
+## Deployment
 
-Feel free to fork this repo and contribute via pull requests! Let’s build the ultimate quiz battle experience together.
+### Frontend (Vercel)
+
+Set environment variables:
+
+- `NEXT_PUBLIC_API_BASE_URL` → `https://<your-render-service>.onrender.com/api/v1`
+- `NEXT_PUBLIC_PUSHER_KEY`
+- `NEXT_PUBLIC_PUSHER_CLUSTER`
+
+### Backend (Render)
+
+Set at least:
+
+- `DATABASE_URL`
+- `USER_JWT_SECRET_KEY`
+- `OTP_SECRET`
+- `FRONTEND_URL` → your Vercel URL, e.g. `https://mcq-battle-app.vercel.app` (no trailing slash)
+- `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `PUSHER_CLUSTER`
+- `BREVO_API_KEY` (`xkeysib-...`), `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`
+- `GROQ_API_KEY`, `GROQ_MODEL`
+
+`FRONTEND_URL` must match the browser origin or CORS will block the UI.
+
+Build/start on Render typically:
+
+```bash
+npm install
+npm run build
+node dist/index.js
+```
+
+(Use your service’s start command if it differs.)
 
 ---
 
-## 📧 Contact
+## Useful scripts
 
-For issues or suggestions, feel free to reach out via GitHub Issues or contact the maintainer directly.
+**Backend**
 
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Dev server (nodemon) |
+| `npm run build` | `prisma generate` + TypeScript compile |
+| `npm start` | Build then run `dist/index.js` |
+| `npm run prisma:generate` | Generate Prisma client |
+| `npm run prisma:dbpush` | Push schema to DB |
 
+**Frontend**
+
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Next.js dev server |
+| `npm run build` | Production build |
+| `npm start` | Serve production build |
+
+---
+
+## Contributing
+
+Fork the repo and open a pull request with a clear description of the change.
+
+## License / contact
+
+Issues and suggestions: use GitHub Issues on this repository.
