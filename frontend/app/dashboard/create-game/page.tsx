@@ -19,12 +19,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Trash2, Save, ArrowLeft, HelpCircle } from "lucide-react"
+import { Plus, Trash2, Save, ArrowLeft, HelpCircle, Sparkles, Loader2 } from "lucide-react"
 import { toastError, toastWarning, toastPromise } from "@/utils/toast"
 import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { createGame } from "@/lib/api/game"
-import { createQuestion } from "@/lib/api/question"
+import { createQuestion, generateQuestions } from "@/lib/api/question"
 import { createOption } from "@/lib/api/option"
 
 interface Option {
@@ -45,6 +45,72 @@ export default function CreateGamePage() {
   const [gameName, setGameName] = useState("")
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(false)
+  const [topic, setTopic] = useState("")
+  const [questionCount, setQuestionCount] = useState("5")
+  const [generating, setGenerating] = useState(false)
+
+  const mapGeneratedQuestions = (
+    generated: Array<{
+      question: string
+      explanation: string
+      options: Array<{ option: string; isCorrect: boolean }>
+    }>,
+  ): Question[] => {
+    const stamp = Date.now()
+    return generated.map((item, questionIndex) => ({
+      id: `temp_${stamp}_${questionIndex}`,
+      question: item.question,
+      explanation: item.explanation,
+      options: item.options.map((opt, optionIndex) => ({
+        id: `temp_${stamp}_${questionIndex}_${optionIndex}`,
+        option: opt.option,
+        isCorrect: opt.isCorrect,
+      })),
+    }))
+  }
+
+  const handleGenerateQuestions = async () => {
+    const trimmedTopic = topic.trim()
+    const count = Number(questionCount)
+
+    if (!trimmedTopic) {
+      toastError("Please enter a topic to generate questions")
+      return
+    }
+
+    if (!Number.isInteger(count) || count < 1 || count > 15) {
+      toastError("Please choose between 1 and 15 questions")
+      return
+    }
+
+    const token = localStorage.getItem("Authorization")
+    if (!token) {
+      toastError("Please sign in to generate questions")
+      return
+    }
+
+    setGenerating(true)
+    try {
+      const data = await toastPromise(generateQuestions(token, trimmedTopic, count), {
+        loading: "Generating questions with AI...",
+        success: (result) => `Generated ${result.questions.length} question${result.questions.length === 1 ? "" : "s"}`,
+        error: (err) =>
+          err?.response?.data?.error ||
+          err?.response?.data?.msg ||
+          err?.message ||
+          "Failed to generate questions",
+      })
+
+      setQuestions((prev) => [...prev, ...mapGeneratedQuestions(data.questions)])
+      if (!gameName.trim()) {
+        setGameName(trimmedTopic)
+      }
+    } catch {
+      // toastPromise already showed the error; avoid Next.js error overlay
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -214,7 +280,11 @@ const handleSaveGame = async () => {
       {
         loading: "Creating your game...",
         success: "Game created successfully!",
-        error: (err) => `Error: ${err.message || "Failed to create game"}`,
+        error: (err) =>
+          err?.response?.data?.error ||
+          err?.response?.data?.msg ||
+          err?.message ||
+          "Failed to create game",
       }
     );
 
@@ -222,9 +292,8 @@ const handleSaveGame = async () => {
     setTimeout(() => {
       router.push("/dashboard/my-games");
     }, 1000);
-  } catch (error) {
-    console.error("Error creating game:", error);
-    toastError(error instanceof Error ? error.message : "An unknown error occurred");
+  } catch {
+    toastError("Failed to create game");
   } finally {
     setLoading(false);
   }
@@ -303,6 +372,66 @@ const handleSaveGame = async () => {
           </CardContent>
         </Card>
 
+        {/* AI Question Generator */}
+        <Card className="border border-blue-200 shadow-sm mb-6 bg-blue-50/40">
+          <CardHeader>
+            <CardTitle className="text-lg text-slate-900 flex items-center">
+              <Sparkles className="h-5 w-5 text-blue-600 mr-2" />
+              Generate Questions with AI
+            </CardTitle>
+            <CardDescription>
+              Enter a topic and how many questions you want. You can edit every generated question before saving.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <Label htmlFor="topic" className="text-slate-700 font-medium">
+                  Topic
+                </Label>
+                <Input
+                  id="topic"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g. JavaScript closures, World War II, Human anatomy"
+                  className="mt-1 bg-white"
+                  disabled={generating}
+                />
+              </div>
+              <div>
+                <Label htmlFor="questionCount" className="text-slate-700 font-medium">
+                  Number of questions
+                </Label>
+                <Input
+                  id="questionCount"
+                  type="number"
+                  min={1}
+                  max={15}
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(e.target.value)}
+                  className="mt-1 bg-white"
+                  disabled={generating}
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-sm text-slate-500">Generates 1–15 questions with answers and explanations.</p>
+              <Button
+                onClick={handleGenerateQuestions}
+                disabled={generating || loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              >
+                {generating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                {generating ? "Generating..." : "Generate Questions"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Questions */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
@@ -318,7 +447,7 @@ const handleSaveGame = async () => {
               <CardContent className="text-center py-12">
                 <HelpCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-900 mb-2">No Questions Yet</h3>
-                <p className="text-slate-600 mb-4">Start by adding your first question to the game</p>
+                <p className="text-slate-600 mb-4">Generate questions from a topic above, or add one manually</p>
                 <Button onClick={addQuestion} className="bg-blue-600 hover:bg-blue-700 text-white font-medium">
                   <Plus className="w-4 h-4 mr-2" />
                   Add First Question

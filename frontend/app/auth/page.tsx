@@ -56,12 +56,7 @@ const handleSignIn = async (e: React.FormEvent) => {
         loading: "Verifying",
       }
     );
-    if (!response?.token) {
-      throw new Error("Token missing in response");
-    }
-    localStorage.setItem("Authorization",response.token);
-    localStorage.setItem("username",response.username);
-    localStorage.setItem("userId",response.userId)
+    persistSession(response);
     router.push("/dashboard/my-games");
   } catch (err: any) {
     toastError(err?.response?.data?.msg || "Error in Verifying");
@@ -99,6 +94,7 @@ const handleSignUpSubmit = async (e: React.FormEvent) => {
     }
 
     localStorage.setItem("otpToken", response.token);
+    setSignUpData({ username, email, password });
     setIsSignUpStep("otp");
   } catch (err: any) {
     toastError(err?.response?.data?.msg || "Unexpected error occurred.");
@@ -109,19 +105,35 @@ const handleSignUpSubmit = async (e: React.FormEvent) => {
 };
 
 
+  const persistSession = (response: { token?: string; username?: string; userId?: string }) => {
+    if (!response?.token || !response.username || !response.userId) {
+      throw new Error("Token missing in response");
+    }
+    localStorage.setItem("Authorization", response.token);
+    localStorage.setItem("username", response.username);
+    localStorage.setItem("userId", response.userId);
+  };
+
   const handleRequestOtp = async () => {
     setOtpLoading(true)
-    const username = signupUsernameRef.current?.value
-    const email = signupEmailRef.current?.value
-    const password = signupPasswordRef.current?.value
-    const response = await toastPromise(requestOtp(username!, email!, password!), {
-      success: "OTP Sent",
-      error: "There is some error in sending OTP",
-      loading: "Resending OTP",
-    })
-
-    localStorage.setItem("otpToken", response.token)
-    setOtpLoading(false)
+    const { username, email, password } = signUpData
+    if (!username || !email || !password) {
+      toastError("Signup details missing. Please fill the form again.")
+      setOtpLoading(false)
+      return
+    }
+    try {
+      const response = await toastPromise(requestOtp(username, email, password), {
+        success: "OTP Sent",
+        error: "There is some error in sending OTP",
+        loading: "Resending OTP",
+      })
+      localStorage.setItem("otpToken", response.token)
+    } catch (err: any) {
+      toastError(err?.response?.data?.msg || "Failed to resend OTP")
+    } finally {
+      setOtpLoading(false)
+    }
   }
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
@@ -138,20 +150,18 @@ const handleSignUpSubmit = async (e: React.FormEvent) => {
   }
 
   try {
-    await toastPromise(
+    const response = await toastPromise(
       verifyOtp(token, otpString), 
       {
-        success: "OTP has been Verified",
+        success: "Account created. Signing you in...",
         error: "Invalid or expired OTP",
         loading: "Verifying OTP...",
       }
     );
-    setIsSignUpStep("form");
+    persistSession(response);
     setOtp(["", "", "", "", "", ""]);
     localStorage.removeItem("otpToken");
-
-    const signinTab = document.querySelector('[value="signin"]') as HTMLButtonElement;
-    signinTab?.click();
+    router.push("/dashboard/my-games");
   } catch (err: any) {
     toastError(err?.response?.data?.msg || "Unexpected error during OTP verification.");
     console.error("Error during OTP verification:", err);
@@ -258,7 +268,7 @@ const handleSignUpSubmit = async (e: React.FormEvent) => {
                         Verifying...
                       </>
                     ) : (
-                      "Verify & Sign Up"
+                      "Verify & Continue"
                     )}
                   </Button>
                 </form>

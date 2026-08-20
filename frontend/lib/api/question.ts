@@ -1,5 +1,23 @@
 import axios from './axiosInstance';
 
+export const generateQuestions = async (token: string, topic: string, count: number) => {
+  const res = await axios.post(
+    '/questions/generate',
+    { topic, count },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 60000,
+    },
+  );
+  return res.data as {
+    questions: Array<{
+      question: string;
+      explanation: string;
+      options: Array<{ option: string; isCorrect: boolean }>;
+    }>;
+  };
+};
+
 export const createQuestion = async (token: string, data: any) => {
   const res = await axios.post('/questions/create', data, {
     headers: { Authorization: `Bearer ${token}` },

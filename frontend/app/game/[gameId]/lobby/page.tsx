@@ -41,7 +41,7 @@ interface Question {
 interface Game {
   id: string
   game: string
-  status: "WAITING" | "STARTED" | "ENDED"
+  status: "WAITING" | "STARTED" | "ENDED" | "COMPLETED"
   userId: string
   user: User
   players: Player[]
@@ -50,7 +50,7 @@ interface Game {
 // Updated interface to match your API response
 interface GameStatusResponse {
   name: string
-  status: "WAITING" | "STARTED" | "ENDED"
+  status: "WAITING" | "STARTED" | "ENDED" | "COMPLETED"
   ownerUsername: string
   players: Array<{
     id: string
@@ -134,9 +134,9 @@ export default function GameLobbyPage() {
         if (isPlayer) {
           await fetchFirstQuestion()
         }
-      } else if (statusData.status === "ENDED") {
-        console.log("Game has ended")
-        setGameEnded(true)
+      } else if (statusData.status === "ENDED" || statusData.status === "COMPLETED") {
+        router.push(`/dashboard/played-games/${gameId}`)
+        return
       }
 
       return statusData.status
@@ -253,7 +253,7 @@ export default function GameLobbyPage() {
       }
 
       console.log(`Submitting answer for question ${currentQuestion.id}, option: ${optionId}`)
-      const response = await fetch("${API_BASE}/players/player-answer", {
+      const response = await fetch(`${API_BASE}/players/player-answer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -302,8 +302,7 @@ export default function GameLobbyPage() {
           }, 2000)
         }
       }, 5000) // 5 second fallback
-    } catch (error) {
-      console.error("Error submitting answer:", error)
+    } catch {
       toastError("Failed to submit answer")
       // Reset states on error
       setAnswerResult(null)
@@ -528,18 +527,8 @@ export default function GameLobbyPage() {
 
     // Game ended
     channel.bind("game-ended", () => {
-      console.log("Game ended event received")
-      setGame((prevGame) => {
-        if (!prevGame) return prevGame
-        return {
-          ...prevGame,
-          status: "ENDED",
-        }
-      })
-
-      setGameEnded(true)
-      setCurrentQuestion(null)
       toastSuccess("The game has ended!")
+      router.push(`/dashboard/played-games/${gameId}`)
     })
 
     // Initial load
@@ -926,10 +915,10 @@ export default function GameLobbyPage() {
                       </div>
 
                       <Button
-                        onClick={() => router.push("/dashboard/my-games")}
+                        onClick={() => router.push(`/dashboard/played-games/${gameId}`)}
                         className="bg-blue-600 hover:bg-blue-700"
                       >
-                        Return to Dashboard
+                        View results
                       </Button>
                     </div>
                   ) : (
@@ -952,13 +941,22 @@ export default function GameLobbyPage() {
                       <Trophy className="h-12 w-12 text-yellow-400" />
                     </div>
                     <h3 className="text-xl font-bold text-blue-300 mb-2">Game Complete</h3>
-                    <p className="text-slate-300 mb-6">This game has ended. Check the final scores on the left!</p>
-                    <Button
-                      onClick={() => router.push("/dashboard/my-games")}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      Return to Dashboard
-                    </Button>
+                    <p className="text-slate-300 mb-6">This game has ended. Review your answers and the leaderboard.</p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button
+                        onClick={() => router.push(`/dashboard/played-games/${gameId}`)}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        View results
+                      </Button>
+                      <Button
+                        onClick={() => router.push("/dashboard/played-games")}
+                        variant="outline"
+                        className="border-slate-500 text-slate-200 hover:bg-slate-700"
+                      >
+                        Played Games
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

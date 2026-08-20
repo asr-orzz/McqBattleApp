@@ -37,8 +37,17 @@ app.get("/health", (req, res) => {
 
 function main() {
   const port = Number(process.env.PORT) || 3001;
-  app.listen(port, () => {
+  const server = app.listen(port);
+  server.on("listening", () => {
     console.log(`Server is running on port ${port}`);
+  });
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`Port ${port} is already in use. Stop the other process or set PORT.`);
+    } else {
+      console.error(`Failed to start server on port ${port}:`, err.message);
+    }
+    process.exit(1);
   });
 }
 

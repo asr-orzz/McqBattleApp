@@ -191,6 +191,7 @@ export default function MyGamesPage() {
 
       await endGame(token, gameId)
       toastSuccess("Game ended successfully!")
+      router.push(`/dashboard/played-games/${gameId}`)
     } catch (error) {
       console.error("Error ending game:", error)
       // Revert optimistic update on error

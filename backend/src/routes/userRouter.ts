@@ -30,7 +30,14 @@ userRouter.post("/request-otp", async (req, res) => {
   const otpExpiry = dayjs().add(10, "minutes").toISOString();
   const passwordHash = await bcrypt.hash(password, 10);
   const otpHash = await bcrypt.hash(otp,10);
-  await sendOtpEmail(email, otp, username);
+
+  try {
+    await sendOtpEmail(email, otp, username);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Failed to send OTP email. Please try again later." });
+    return;
+  }
 
   const tempToken = jwt.sign(
     { username, email, passwordHash, otpHash, otpExpiry },
@@ -76,7 +83,19 @@ userRouter.post("/verify-otp", async (req, res) => {
       },
     });
 
-     res.json({ msg: "User created successfully.", username: user.username });
+    const authToken = jwt.sign(
+      { id: user.id, username: user.username },
+      process.env.USER_JWT_SECRET_KEY!,
+      { expiresIn: "1d" }
+    );
+
+     res.json({
+      msg: "User created successfully.",
+      token: authToken,
+      userId: user.id,
+      username: user.username,
+      expiresIn: "1d",
+    });
      return
   } catch (err) {
      res.status(400).json({ msg: "Invalid or expired token." });
@@ -152,7 +171,13 @@ userRouter.post("/forgot-password/request-otp", async (req, res) => {
   const otpExpiry = dayjs().add(10, "minutes").toISOString();
   const otpHash = await bcrypt.hash(otp, 10);
 
-  await sendOtpEmail(email, otp, user.username);
+  try {
+    await sendOtpEmail(email, otp, user.username);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Failed to send OTP email. Please try again later." });
+    return;
+  }
 
   const tempToken = jwt.sign(
     { email, otpHash, otpExpiry },

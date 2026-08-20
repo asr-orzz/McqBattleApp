@@ -7,9 +7,14 @@ export const userMiddleware = (req: Request, res: Response, next: NextFunction) 
         res.status(401).json({ msg: "Authorization token missing" });
         return;
     }
-    const token = authHeader.split(" ")[1];
+    const token = authHeader.slice("Bearer ".length).trim();
+    if (!token) {
+        res.status(401).json({ msg: "Authorization token missing" });
+        return;
+    }
     try {
         const decoded = jwt.verify(token,process.env.USER_JWT_SECRET_KEY!) as { id: string; username: string };
+        req.body = req.body || {};
         req.body.userId = decoded.id; 
         next();
     } catch (err) {

@@ -4,6 +4,145 @@ import { userMiddleware } from "../middleware/userMiddleware";
 import pusher from "../utils/pusher";
 
 export const playerRouter = Router();
+
+playerRouter.post("/played-games", userMiddleware, async (req, res) => {
+  const userId = req.body.userId as string;
+
+  try {
+    const participations = await prisma.player.findMany({
+      where: { userId },
+      include: {
+        game: {
+          include: {
+            user: { select: { username: true } },
+            _count: { select: { questions: true, players: true } },
+          },
+        },
+      },
+      orderBy: { joinedAt: "desc" },
+    });
+
+    const games = await Promise.all(
+      participations.map(async (participation) => {
+        const answeredCount = await prisma.userAnswer.count({
+          where: { userId, gameId: participation.gameId },
+        });
+
+        return {
+          id: participation.game.id,
+          name: participation.game.game,
+          status: participation.game.status,
+          createdAt: participation.game.createdAt,
+          creatorUsername: participation.game.user.username,
+          myScore: participation.score,
+          playerCount: participation.game._count.players,
+          questionCount: participation.game._count.questions,
+          answeredCount,
+        };
+      }),
+    );
+
+    res.json({ games });
+  } catch (error) {
+    console.error("Error fetching played games:", error instanceof Error ? error.message : error);
+    res.status(500).json({ error: "Failed to fetch played games" });
+  }
+});
+
+playerRouter.post("/played-games/:gameId", userMiddleware, async (req, res) => {
+  const userId = req.body.userId as string;
+  const gameId = req.params.gameId as string;
+
+  try {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        user: { select: { username: true } },
+        players: {
+          include: {
+            user: { select: { id: true, username: true } },
+          },
+        },
+        questions: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            options: {
+              select: { id: true, option: true, isCorrect: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!game) {
+      res.status(404).json({ error: "Game not found" });
+      return;
+    }
+
+    const player = await prisma.player.findUnique({
+      where: { userId_gameId: { userId, gameId } },
+    });
+
+    if (!player && game.userId !== userId) {
+      res.status(403).json({ error: "You did not play this game" });
+      return;
+    }
+
+    const myAnswers = await prisma.userAnswer.findMany({
+      where: { userId, gameId },
+    });
+    const answerByQuestion = new Map(myAnswers.map((answer) => [answer.questionId, answer]));
+    const gameCompleted = game.status === "COMPLETED";
+
+    const questions = game.questions.map((question) => {
+      const answer = answerByQuestion.get(question.id);
+      const reveal = gameCompleted || Boolean(answer);
+      const selectedOption = question.options.find((option) => option.id === answer?.optionId);
+
+      return {
+        id: question.id,
+        question: question.question,
+        explanation: reveal ? question.explanation : null,
+        selectedOptionId: answer?.optionId ?? null,
+        isCorrect: selectedOption ? selectedOption.isCorrect : null,
+        options: question.options.map((option) => ({
+          id: option.id,
+          option: option.option,
+          isCorrect: reveal ? option.isCorrect : undefined,
+        })),
+      };
+    });
+
+    const leaderboard = [...game.players]
+      .sort((a, b) => b.score - a.score)
+      .map((entry, index) => ({
+        rank: index + 1,
+        userId: entry.user.id,
+        username: entry.user.username,
+        score: entry.score,
+        isCurrentUser: entry.user.id === userId,
+      }));
+
+    res.json({
+      game: {
+        id: game.id,
+        name: game.game,
+        status: game.status,
+        createdAt: game.createdAt,
+        creatorUsername: game.user.username,
+      },
+      myScore: player?.score ?? 0,
+      questionCount: game.questions.length,
+      answeredCount: myAnswers.length,
+      leaderboard,
+      questions,
+    });
+  } catch (error) {
+    console.error("Error fetching played game review:", error instanceof Error ? error.message : error);
+    res.status(500).json({ error: "Failed to fetch game review" });
+  }
+});
+
 playerRouter.post("/player-answer", userMiddleware, async (req, res) => {
   const { gameId, userId, questionId, optionId } = req.body;
 

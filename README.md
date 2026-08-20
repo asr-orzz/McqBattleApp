@@ -11,7 +11,8 @@ A real-time multiplayer MCQ battle game where users can challenge each other, jo
 - **Backend:** Node.js, Express.js, Prisma, PostgreSQL
 - **Real-Time Communication:** Pusher
 - **Authentication:** JWT
-- **Email Service:** Gmail SMTP
+- **Email Service:** Brevo (transactional email)
+- **Question Generation:** Groq LLM API
 - **Deployment:** Vercel (Frontend), Render (Backend)
 
 ---
@@ -71,8 +72,11 @@ PUSHER_KEY=""
 PUSHER_SECRET=""
 PUSHER_CLUSTER=""
 OTP_SECRET=""                 # Any random string used for OTP encryption
-GMAIL_USER=""                 # Gmail address used to send OTPs
-GMAIL_APP_PASS=""             # App-specific password from Gmail
+BREVO_API_KEY=""              # From https://app.brevo.com (SMTP & API → API Keys)
+BREVO_SENDER_EMAIL=""         # Must be a verified sender in Brevo
+BREVO_SENDER_NAME="MCQ Battle"
+GROQ_API_KEY=""               # From https://console.groq.com
+GROQ_MODEL="openai/gpt-oss-20b"
 ```
 
 ### Step 4: Run database migrations (if using Prisma)
@@ -132,7 +136,8 @@ The frontend will run on `http://localhost:3000`.
 ## ✅ Features
 
 * 🔐 Secure Signup & Login with JWT
-* 📩 OTP Verification via Email
+* 📩 OTP Verification via Email (Brevo)
+* ✨ AI-generated quiz questions from a topic
 * 👥 Real-Time 1v1 Multiplayer Matchmaking
 * 🧠 Live MCQ Questions with Timed Answers
 * 📊 Game Stats & Leaderboard (optional)

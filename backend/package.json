@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch src --exec ts-node src/index.ts",
+    "dev": "nodemon",
     "build": "npx prisma generate && tsc",
     "start": "npm run build && node dist/index.js",
     "prisma:generate": "prisma generate",
@@ -15,27 +15,26 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@prisma/client": "^6.8.2",
+    "@prisma/client": "^6.19.3",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",
-    "dotenv": "^16.5.0",
+    "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^7.0.3",
-    "prisma": "^6.8.2",
+    "nodemailer": "^9.0.5",
+    "prisma": "^6.19.3",
     "pusher": "^5.2.0",
     "typescript": "^5.8.3",
-    "zod": "^3.25.20"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
-    "@types/cors": "^2.8.18",
-    "@types/dotenv": "^6.1.1",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.2",
-    "@types/jsonwebtoken": "^9.0.9",
-    "@types/node": "^22.15.21",
-    "@types/nodemailer": "^6.4.17",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.18.0",
+    "@types/nodemailer": "^8.0.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2"
   }

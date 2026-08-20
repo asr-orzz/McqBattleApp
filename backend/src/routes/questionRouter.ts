@@ -1,10 +1,41 @@
 import { Router } from "express";
 import prisma from "../prisma/client";
 import { userMiddleware } from "../middleware/userMiddleware";
+import { generateQuestionsFromTopic } from "../utils/generateQuestions";
 
 export const questionRouter = Router();
 
 questionRouter.use(userMiddleware);
+
+questionRouter.post("/generate", async (req, res) => {
+  const { topic, count } = req.body as { topic?: unknown; count?: unknown };
+
+  if (typeof topic !== "string" || !topic.trim()) {
+    res.status(400).json({ error: "Topic is required" });
+    return;
+  }
+
+  const questionCount = Number(count);
+  if (!Number.isInteger(questionCount)) {
+    res.status(400).json({ error: "Number of questions must be a whole number between 1 and 15" });
+    return;
+  }
+
+  try {
+    const questions = await generateQuestionsFromTopic(topic.trim(), questionCount);
+    res.status(200).json({ questions });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to generate questions";
+    const status =
+      message.includes("GROQ_API_KEY") || message.includes("not configured")
+        ? 503
+        : message.includes("must be an integer")
+          ? 400
+          : 500;
+    console.error("Question generation failed:", message);
+    res.status(status).json({ error: message });
+  }
+});
 
 questionRouter.post("/create", async (req, res) => {
   const { question, explanation, gameId } = req.body;
