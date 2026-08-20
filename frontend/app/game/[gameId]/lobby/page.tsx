@@ -3,9 +3,24 @@
 import { useEffect, useState, useRef } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Users, Trophy, Clock, Gamepad2, LogOut, Play, CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import {
+  Users,
+  Trophy,
+  Clock,
+  LogOut,
+  Play,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Crown,
+  Medal,
+  Award,
+  Copy,
+  ArrowLeft,
+  Share2,
+} from "lucide-react"
 import pusherClient from "@/lib/pusherClient"
 import { toastSuccess, toastError, toastInfo } from "@/utils/toast"
 import axiosInstance from "@/lib/api/axiosInstance"
@@ -554,16 +569,51 @@ export default function GameLobbyPage() {
     }
   }, [router])
 
+  const copyGameId = async () => {
+    try {
+      await navigator.clipboard.writeText(gameId)
+      toastSuccess("Game ID copied")
+    } catch {
+      toastError("Could not copy Game ID")
+    }
+  }
+
+  const rankBadge = (position: number) => {
+    if (position === 1) {
+      return (
+        <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-sm">
+          <Crown className="w-4 h-4 text-white" />
+        </div>
+      )
+    }
+    if (position === 2) {
+      return (
+        <div className="w-8 h-8 bg-gradient-to-r from-slate-300 to-slate-500 rounded-full flex items-center justify-center shadow-sm">
+          <Medal className="w-4 h-4 text-white" />
+        </div>
+      )
+    }
+    if (position === 3) {
+      return (
+        <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full flex items-center justify-center shadow-sm">
+          <Award className="w-4 h-4 text-white" />
+        </div>
+      )
+    }
+    return (
+      <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
+        <span className="text-sm font-bold text-slate-600">#{position}</span>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6">
-        <div className="container mx-auto max-w-4xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-blue-400">Loading Game Lobby...</h2>
-            </div>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-800">Loading lobby…</h2>
+          <p className="text-sm text-slate-500 mt-1">Fetching players and game status</p>
         </div>
       </div>
     )
@@ -571,75 +621,79 @@ export default function GameLobbyPage() {
 
   if (!game) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6">
-        <div className="container mx-auto max-w-4xl">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-red-400">Game not found</h2>
-              <p className="mt-2 text-slate-300">This game may have been deleted or you don't have access.</p>
-              <Button onClick={() => router.push("/dashboard/my-games")} className="mt-4 bg-blue-600 hover:bg-blue-700">
-                Return to Dashboard
-              </Button>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-slate-200 shadow-lg">
+          <CardContent className="text-center p-8">
+            <Trophy className="w-14 h-14 text-slate-300 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-slate-900 mb-2">Game not found</h2>
+            <p className="text-slate-600 mb-6">This game may have been deleted or you don&apos;t have access.</p>
+            <Button onClick={() => router.push("/dashboard/my-games")} className="bg-blue-600 hover:bg-blue-700">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to My Games
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   const sortedPlayers = [...game.players].sort((a, b) => b.score - a.score)
+  const showLiveScores = game.status === "STARTED" || gameEnded
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-4 md:p-6">
-      {/* Toast container */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 pt-6 pb-10">
       <Toaster position="top-right" />
 
-      <div className="container mx-auto max-w-4xl">
-        {/* Game Header */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-6 bg-slate-800 rounded-lg p-4 border border-slate-700 shadow-lg">
+      <div className="container mx-auto px-4 max-w-5xl">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-blue-400 flex items-center">
-              <Gamepad2 className="h-7 w-7 mr-2 text-blue-500" />
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/dashboard/my-games")}
+              className="mb-3 -ml-2 text-slate-600 hover:text-slate-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              My Games
+            </Button>
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+              <Trophy className="w-8 h-8 text-yellow-500 shrink-0" />
               {game.game}
             </h1>
-            <p className="text-slate-300 mt-1">
-              Hosted by <span className="font-medium">{game.user.username}</span>
+            <p className="text-slate-600 mt-1">
+              Hosted by <span className="font-medium text-slate-800">{game.user.username}</span>
             </p>
           </div>
-          <div className="mt-4 md:mt-0 flex items-center">
+
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge
-              className={`
-                px-3 py-1 text-sm font-medium rounded-full
-                ${
-                  game.status === "WAITING"
-                    ? "bg-amber-600 text-amber-100"
-                    : game.status === "STARTED"
-                      ? "bg-green-600 text-green-100"
-                      : "bg-red-600 text-red-100"
-                }
-              `}
+              className={
+                game.status === "WAITING"
+                  ? "bg-amber-100 text-amber-800 border border-amber-200"
+                  : game.status === "STARTED"
+                    ? "bg-green-100 text-green-800 border border-green-200"
+                    : "bg-slate-100 text-slate-700 border border-slate-200"
+              }
             >
               {game.status === "WAITING" ? (
                 <>
-                  <Clock className="h-3.5 w-3.5 mr-1" /> Waiting for Players
+                  <Clock className="h-3.5 w-3.5 mr-1" /> Waiting
                 </>
               ) : game.status === "STARTED" ? (
                 <>
-                  <Play className="h-3.5 w-3.5 mr-1" /> Game In Progress
+                  <Play className="h-3.5 w-3.5 mr-1" /> Live
                 </>
               ) : (
                 <>
-                  <Trophy className="h-3.5 w-3.5 mr-1" /> Game Ended
+                  <Trophy className="h-3.5 w-3.5 mr-1" /> Ended
                 </>
               )}
             </Badge>
-
-            {!isOwner && (
+            {!isOwner && game.status === "WAITING" && (
               <Button
                 onClick={leaveGame}
                 variant="outline"
                 size="sm"
-                className="ml-3 border-red-800 text-red-400 hover:bg-red-900 hover:text-red-200"
+                className="border-red-200 text-red-600 hover:bg-red-50"
               >
                 <LogOut className="h-4 w-4 mr-1" />
                 Leave
@@ -648,82 +702,108 @@ export default function GameLobbyPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Players List */}
-          <div className="md:col-span-1">
-            <Card className="bg-slate-800 border-slate-700 shadow-lg">
-              <CardHeader className="border-b border-slate-700">
-                <CardTitle className="text-blue-400 flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Players ({game.players.length})
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-2">
+            <Card className="border-slate-200 shadow-lg overflow-hidden sticky top-6">
+              <CardHeader className="border-b border-slate-100 bg-white pb-4">
+                <CardTitle className="text-lg text-slate-900 flex items-center justify-between">
+                  <span className="flex items-center">
+                    {showLiveScores ? (
+                      <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
+                    ) : (
+                      <Users className="h-5 w-5 mr-2 text-blue-600" />
+                    )}
+                    {showLiveScores ? "Live leaderboard" : "Lobby"}
+                  </span>
+                  <span className="text-sm font-normal text-slate-500">{sortedPlayers.length} players</span>
                 </CardTitle>
+                <CardDescription>
+                  {showLiveScores ? "Scores update as answers come in" : "Players appear here as they join"}
+                </CardDescription>
               </CardHeader>
-              <CardContent className="pt-4">
+
+              <CardContent className="p-0">
                 {sortedPlayers.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
-                    <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                    <p>No players have joined yet</p>
-                    {game.status === "WAITING" && <p className="text-sm mt-2">Share the game ID for others to join!</p>}
+                  <div className="text-center py-12 px-4 text-slate-500">
+                    <Users className="h-12 w-12 mx-auto mb-3 text-slate-300" />
+                    <p className="font-medium text-slate-700">No players yet</p>
+                    <p className="text-sm mt-1">Share the Game ID so others can join</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {sortedPlayers.map((player, index) => (
-                      <div
-                        key={player.id}
-                        className={`
-                          flex items-center justify-between p-3 rounded-md
-                          ${player.userId === currentUserId ? "bg-blue-900/30 border border-blue-800" : "bg-slate-700/50"}
-                        `}
-                      >
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                            {player.user.username.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="ml-3">
-                            <span className="font-medium">
-                              {player.user.username}
-                              {player.userId === currentUserId && (
-                                <span className="ml-2 text-xs bg-blue-800 text-blue-200 px-1.5 py-0.5 rounded">
-                                  You
-                                </span>
-                              )}
-                              {player.userId === game.userId && (
-                                <span className="ml-2 text-xs bg-amber-800 text-amber-200 px-1.5 py-0.5 rounded">
-                                  Host
-                                </span>
-                              )}
-                            </span>
-                            {game.status === "STARTED" && index === 0 && (
-                              <div className="text-xs text-yellow-400 flex items-center mt-1">
-                                <Trophy className="h-3 w-3 mr-1" />
-                                Leading
+                  <div className="divide-y divide-slate-100">
+                    <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2.5 bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      <div className="col-span-2 text-center">Rank</div>
+                      <div className="col-span-7">Player</div>
+                      <div className="col-span-3 text-right">{showLiveScores ? "Score" : "Status"}</div>
+                    </div>
+                    {sortedPlayers.map((player, index) => {
+                      const position = index + 1
+                      const isYou = player.userId === currentUserId
+                      const isHost = player.userId === game.userId
+
+                      return (
+                        <div
+                          key={player.id}
+                          className={`px-4 py-3 transition-colors ${
+                            position === 1 && showLiveScores
+                              ? "bg-gradient-to-r from-yellow-50 to-transparent"
+                              : isYou
+                                ? "bg-blue-50/70"
+                                : "hover:bg-slate-50"
+                          }`}
+                        >
+                          <div className="grid grid-cols-12 gap-2 items-center">
+                            <div className="col-span-2 flex justify-center">{rankBadge(position)}</div>
+                            <div className="col-span-7 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-semibold text-slate-900 truncate">{player.user.username}</span>
+                                {isYou && (
+                                  <Badge className="bg-blue-100 text-blue-800 text-[10px] px-1.5 py-0">You</Badge>
+                                )}
+                                {isHost && (
+                                  <Badge className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0">Host</Badge>
+                                )}
                               </div>
-                            )}
+                              {showLiveScores && position === 1 && (
+                                <p className="text-xs text-yellow-700 mt-0.5 flex items-center">
+                                  <Crown className="w-3 h-3 mr-1" /> Leading
+                                </p>
+                              )}
+                            </div>
+                            <div className="col-span-3 text-right">
+                              {showLiveScores ? (
+                                <>
+                                  <div className="text-xl font-bold text-slate-900 tabular-nums">{player.score}</div>
+                                  <div className="text-[10px] text-slate-500 uppercase">pts</div>
+                                </>
+                              ) : (
+                                <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">
+                                  Ready
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                          <span className="font-bold">{player.score}</span>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </CardContent>
+
               {isOwner && game.status === "WAITING" && (
-                <CardFooter className="border-t border-slate-700 pt-4">
+                <CardFooter className="border-t border-slate-100 bg-white p-4">
                   <Button
                     onClick={startGame}
                     disabled={startingGame || game.players.length === 0}
-                    className="w-full bg-green-600 hover:bg-green-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
                   >
                     {startingGame ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting Game...
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…
                       </>
                     ) : (
                       <>
-                        <Play className="h-4 w-4 mr-2" /> Start Game ({game.players.length} players)
+                        <Play className="h-4 w-4 mr-2" /> Start battle ({game.players.length})
                       </>
                     )}
                   </Button>
@@ -732,231 +812,263 @@ export default function GameLobbyPage() {
             </Card>
           </div>
 
-          {/* Game Content */}
-          <div className="md:col-span-2">
+          <div className="lg:col-span-3 space-y-6">
             {game.status === "WAITING" ? (
-              <Card className="bg-slate-800 border-slate-700 shadow-lg h-full">
-                <CardHeader className="border-b border-slate-700">
-                  <CardTitle className="text-blue-400">Waiting for Game to Start</CardTitle>
+              <Card className="border-slate-200 shadow-lg">
+                <CardHeader className="border-b border-slate-100">
+                  <CardTitle className="text-slate-900 flex items-center">
+                    <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                    Waiting room
+                  </CardTitle>
+                  <CardDescription>
+                    {isOwner
+                      ? "Start when everyone is ready. The live leaderboard will appear once the battle begins."
+                      : "Hang tight — the host will start the battle shortly."}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="text-center py-12">
-                    <div className="w-24 h-24 rounded-full bg-blue-900/30 border-4 border-blue-600/50 flex items-center justify-center mx-auto mb-6">
-                      <Clock className="h-12 w-12 text-blue-400 animate-pulse" />
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 mb-6">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-600 mb-2">
+                      <Share2 className="h-4 w-4 text-blue-600" />
+                      Share Game ID
                     </div>
-                    <h3 className="text-xl font-bold text-blue-300 mb-2">Game Lobby</h3>
-                    <p className="text-slate-300 mb-6 max-w-md mx-auto">
-                      {isOwner
-                        ? "You can start the game when players have joined. Players will see their usernames listed on the left."
-                        : "Waiting for the host to start the game. You can see all joined players on the left."}
-                    </p>
-
-                    <div className="bg-slate-700 rounded-lg p-4 mb-6">
-                      <p className="text-sm text-slate-300 mb-2">Game ID:</p>
-                      <code className="text-blue-400 font-mono text-lg">{gameId}</code>
-                    </div>
-
-                    {isOwner && (
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 font-mono text-sm sm:text-base text-slate-900 bg-white border border-slate-200 rounded-lg px-3 py-2.5 truncate">
+                        {gameId}
+                      </code>
                       <Button
-                        onClick={startGame}
-                        disabled={startingGame || game.players.length === 0}
-                        size="lg"
-                        className="bg-green-600 hover:bg-green-700"
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={copyGameId}
+                        className="shrink-0 border-slate-200"
+                        aria-label="Copy game ID"
                       >
-                        {startingGame ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting Game...
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-4 w-4 mr-2" /> Start Game
-                          </>
-                        )}
+                        <Copy className="h-4 w-4" />
                       </Button>
-                    )}
+                    </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="rounded-lg border border-slate-200 bg-white p-4 text-center">
+                      <Users className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                      <div className="text-2xl font-bold text-slate-900">{game.players.length}</div>
+                      <div className="text-xs text-slate-500">Joined</div>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-white p-4 text-center">
+                      <Clock className="w-6 h-6 text-amber-500 mx-auto mb-1" />
+                      <div className="text-2xl font-bold text-slate-900">Lobby</div>
+                      <div className="text-xs text-slate-500">Status</div>
+                    </div>
+                  </div>
+
+                  {isOwner ? (
+                    <Button
+                      onClick={startGame}
+                      disabled={startingGame || game.players.length === 0}
+                      size="lg"
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      {startingGame ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" /> Start battle
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 text-slate-600 text-sm py-3 rounded-lg bg-blue-50 border border-blue-100">
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                      Waiting for host to start…
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : game.status === "STARTED" ? (
-              <Card className="bg-slate-800 border-slate-700 shadow-lg h-full">
-                <CardHeader className="border-b border-slate-700">
-                  <CardTitle className="text-blue-400">
-                    {loadingQuestion
-                      ? "Loading Question..."
-                      : currentQuestion
-                        ? `Question ${questionIndex}`
-                        : gameEnded
-                          ? "Game Complete"
-                          : "Fetching Question..."}
-                  </CardTitle>
+              <Card className="border-slate-200 shadow-lg">
+                <CardHeader className="border-b border-slate-100">
+                  <div className="flex items-center justify-between gap-3">
+                    <CardTitle className="text-slate-900">
+                      {loadingQuestion
+                        ? "Loading question…"
+                        : currentQuestion
+                          ? `Question ${questionIndex}`
+                          : gameEnded
+                            ? "Battle complete"
+                            : "Preparing question…"}
+                    </CardTitle>
+                    {currentQuestion && (
+                      <Badge className="bg-blue-100 text-blue-800 border border-blue-200">Q{questionIndex}</Badge>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="pt-6">
                   {loadingQuestion ? (
-                    <div className="text-center py-12">
-                      <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold text-blue-300 mb-2">Loading Question...</h3>
-                      <p className="text-slate-300">Please wait while we fetch your question.</p>
+                    <div className="text-center py-14">
+                      <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-slate-800">Loading question</h3>
+                      <p className="text-slate-500 text-sm mt-1">Almost ready</p>
                     </div>
                   ) : currentQuestion ? (
                     <div>
-                      <div className="mb-6 p-4 bg-slate-700 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-medium text-white">Question {questionIndex}:</h3>
-                          <Badge className="bg-blue-600 text-blue-100">{questionIndex}</Badge>
-                        </div>
-                        <p className="text-xl text-blue-200">{currentQuestion.question}</p>
+                      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <p className="text-lg sm:text-xl font-semibold text-slate-900 leading-snug">
+                          {currentQuestion.question}
+                        </p>
                       </div>
 
-                      {/* Enhanced answer result display */}
                       {answerResult && showingAnswerResult && (
                         <div
-                          className={`mb-6 p-6 rounded-lg flex items-center border-2 ${
-                            answerResult.isCorrect ? "bg-green-900/60 border-green-500" : "bg-red-900/60 border-red-500"
+                          className={`mb-5 p-4 rounded-xl flex items-center border ${
+                            answerResult.isCorrect
+                              ? "bg-green-50 border-green-200 text-green-800"
+                              : "bg-red-50 border-red-200 text-red-800"
                           }`}
                         >
                           {answerResult.isCorrect ? (
-                            <CheckCircle2 className="h-8 w-8 text-green-400 mr-4" />
+                            <CheckCircle2 className="h-6 w-6 text-green-600 mr-3 shrink-0" />
                           ) : (
-                            <XCircle className="h-8 w-8 text-red-400 mr-4" />
+                            <XCircle className="h-6 w-6 text-red-500 mr-3 shrink-0" />
                           )}
-                          <span
-                            className={`text-xl font-bold ${answerResult.isCorrect ? "text-green-200" : "text-red-200"}`}
-                          >
-                            {answerResult.message}
+                          <span className="font-semibold">
+                            {answerResult.isCorrect ? "Correct! +1 point" : "Incorrect"}
                           </span>
                         </div>
                       )}
 
-                      <div className="space-y-3">
-                        <h3 className="text-lg font-medium text-white mb-2">Select your answer:</h3>
-                        {currentQuestion.options.map((option, index) => (
-                          <Button
-                            key={option.id}
-                            onClick={() => submitAnswer(option.id)}
-                            disabled={submitting || selectedOption !== null}
-                            className={`w-full justify-start text-left p-4 h-auto ${
-                              selectedOption === option.id
-                                ? "bg-blue-700 hover:bg-blue-700 border-2 border-blue-400"
-                                : "bg-slate-700 hover:bg-slate-600"
-                            }`}
-                          >
-                            <span className="text-lg">
-                              {String.fromCharCode(65 + index)}. {option.option}
-                            </span>
-                          </Button>
-                        ))}
+                      <p className="text-sm font-medium text-slate-600 mb-3">Choose an answer</p>
+                      <div className="space-y-2.5">
+                        {currentQuestion.options.map((option, index) => {
+                          const selected = selectedOption === option.id
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() => submitAnswer(option.id)}
+                              disabled={submitting || selectedOption !== null}
+                              className={`w-full text-left rounded-xl border px-4 py-3.5 transition-all ${
+                                selected
+                                  ? "border-blue-400 bg-blue-50 ring-2 ring-blue-200"
+                                  : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50"
+                              } disabled:opacity-70 disabled:cursor-not-allowed`}
+                            >
+                              <span className="flex items-start gap-3">
+                                <span
+                                  className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                                    selected ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+                                  }`}
+                                >
+                                  {String.fromCharCode(65 + index)}
+                                </span>
+                                <span className="text-slate-900 font-medium leading-snug">{option.option}</span>
+                              </span>
+                            </button>
+                          )
+                        })}
                       </div>
 
                       {submitting && !answerResult && (
-                        <div className="mt-6 text-center py-4 bg-slate-700/50 rounded-lg">
-                          <Loader2 className="h-6 w-6 animate-spin text-blue-500 mx-auto mb-2" />
-                          <p className="text-slate-300">Checking your answer...</p>
+                        <div className="mt-5 text-center py-3 rounded-lg bg-slate-50 border border-slate-200">
+                          <Loader2 className="h-5 w-5 animate-spin text-blue-600 mx-auto mb-1" />
+                          <p className="text-sm text-slate-600">Checking answer…</p>
                         </div>
                       )}
                     </div>
                   ) : gameEnded ? (
-                    <div className="text-center py-12">
-                      <div className="w-24 h-24 rounded-full bg-yellow-900/30 border-4 border-yellow-600/50 flex items-center justify-center mx-auto mb-6">
-                        <Trophy className="h-12 w-12 text-yellow-400" />
-                      </div>
-                      <h3 className="text-xl font-bold text-yellow-300 mb-4">Thank You for Playing!</h3>
-                      <p className="text-slate-300 mb-6">Here are the final results:</p>
-
-                      {/* Leaderboard */}
-                      <div className="bg-slate-700 rounded-lg p-6 mb-6 max-w-md mx-auto">
-                        <h4 className="text-lg font-bold text-blue-400 mb-4 flex items-center justify-center">
-                          <Trophy className="h-5 w-5 mr-2" />
-                          Final Leaderboard
-                        </h4>
-                        <div className="space-y-3">
-                          {sortedPlayers.map((player, index) => (
-                            <div
-                              key={player.id}
-                              className={`flex items-center justify-between p-3 rounded-md ${
-                                index === 0
-                                  ? "bg-yellow-900/30 border border-yellow-600"
-                                  : index === 1
-                                    ? "bg-gray-600/30 border border-gray-500"
-                                    : index === 2
-                                      ? "bg-amber-900/30 border border-amber-600"
-                                      : "bg-slate-600/30"
-                              }`}
-                            >
-                              <div className="flex items-center">
-                                <div
-                                  className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 ${
-                                    index === 0
-                                      ? "bg-yellow-600"
-                                      : index === 1
-                                        ? "bg-gray-500"
-                                        : index === 2
-                                          ? "bg-amber-600"
-                                          : "bg-slate-500"
-                                  }`}
-                                >
-                                  {index + 1}
-                                </div>
-                                <span className="font-medium text-white">
-                                  {player.user.username}
-                                  {player.userId === currentUserId && (
-                                    <span className="ml-2 text-xs bg-blue-800 text-blue-200 px-1.5 py-0.5 rounded">
-                                      You
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                              <div className="flex items-center">
-                                <Trophy className="h-4 w-4 text-yellow-500 mr-1" />
-                                <span className="font-bold text-white">{player.score}</span>
-                              </div>
-                            </div>
-                          ))}
+                    <div>
+                      <div className="text-center mb-6">
+                        <div className="w-16 h-16 rounded-full bg-yellow-50 border border-yellow-200 flex items-center justify-center mx-auto mb-4">
+                          <Trophy className="h-8 w-8 text-yellow-500" />
                         </div>
+                        <h3 className="text-xl font-bold text-slate-900 mb-1">Thanks for playing</h3>
+                        <p className="text-slate-600 text-sm">Final standings for this battle</p>
                       </div>
+
+                      <Card className="border-slate-200 shadow-sm overflow-hidden mb-6">
+                        <div className="bg-slate-100 px-4 py-3 border-b border-slate-200">
+                          <div className="grid grid-cols-12 gap-2 text-xs font-semibold text-slate-600">
+                            <div className="col-span-2 text-center">Rank</div>
+                            <div className="col-span-7">Player</div>
+                            <div className="col-span-3 text-right">Score</div>
+                          </div>
+                        </div>
+                        <div className="divide-y divide-slate-100">
+                          {sortedPlayers.map((player, index) => {
+                            const position = index + 1
+                            return (
+                              <div
+                                key={player.id}
+                                className={`px-4 py-3 ${
+                                  position <= 3 ? "bg-gradient-to-r from-yellow-50 to-transparent" : ""
+                                }`}
+                              >
+                                <div className="grid grid-cols-12 gap-2 items-center">
+                                  <div className="col-span-2 flex justify-center">{rankBadge(position)}</div>
+                                  <div className="col-span-7 flex items-center gap-2 min-w-0">
+                                    <span className="font-semibold text-slate-900 truncate">
+                                      {player.user.username}
+                                    </span>
+                                    {position === 1 && (
+                                      <Badge className="bg-yellow-100 text-yellow-800 text-[10px]">Winner</Badge>
+                                    )}
+                                    {player.userId === currentUserId && (
+                                      <Badge className="bg-blue-100 text-blue-800 text-[10px]">You</Badge>
+                                    )}
+                                  </div>
+                                  <div className="col-span-3 text-right">
+                                    <div className="text-xl font-bold text-slate-900">{player.score}</div>
+                                    <div className="text-[10px] text-slate-500">points</div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </Card>
 
                       <Button
                         onClick={() => router.push(`/dashboard/played-games/${gameId}`)}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-blue-600 hover:bg-blue-700"
                       >
-                        View results
+                        View full results
                       </Button>
                     </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-bold text-blue-300 mb-2">Fetching Question...</h3>
-                      <p className="text-slate-300">Please wait while we prepare your first question.</p>
+                    <div className="text-center py-14">
+                      <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-slate-800">Preparing first question</h3>
+                      <p className="text-slate-500 text-sm mt-1">Get ready</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-slate-800 border-slate-700 shadow-lg h-full">
-                <CardHeader className="border-b border-slate-700">
-                  <CardTitle className="text-blue-400">Game Ended</CardTitle>
+              <Card className="border-slate-200 shadow-lg">
+                <CardHeader className="border-b border-slate-100">
+                  <CardTitle className="text-slate-900 flex items-center">
+                    <Trophy className="h-5 w-5 mr-2 text-yellow-500" />
+                    Game ended
+                  </CardTitle>
+                  <CardDescription>Review answers, explanations, and the final leaderboard.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="text-center py-12">
-                    <div className="w-24 h-24 rounded-full bg-blue-900/30 border-4 border-blue-600/50 flex items-center justify-center mx-auto mb-6">
-                      <Trophy className="h-12 w-12 text-yellow-400" />
-                    </div>
-                    <h3 className="text-xl font-bold text-blue-300 mb-2">Game Complete</h3>
-                    <p className="text-slate-300 mb-6">This game has ended. Review your answers and the leaderboard.</p>
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      <Button
-                        onClick={() => router.push(`/dashboard/played-games/${gameId}`)}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        View results
-                      </Button>
-                      <Button
-                        onClick={() => router.push("/dashboard/played-games")}
-                        variant="outline"
-                        className="border-slate-500 text-slate-200 hover:bg-slate-700"
-                      >
-                        Played Games
-                      </Button>
-                    </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      onClick={() => router.push(`/dashboard/played-games/${gameId}`)}
+                      className="bg-blue-600 hover:bg-blue-700 flex-1"
+                    >
+                      View results
+                    </Button>
+                    <Button
+                      onClick={() => router.push("/dashboard/played-games")}
+                      variant="outline"
+                      className="border-slate-200 flex-1"
+                    >
+                      Played Games
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -967,4 +1079,3 @@ export default function GameLobbyPage() {
     </div>
   )
 }
-
