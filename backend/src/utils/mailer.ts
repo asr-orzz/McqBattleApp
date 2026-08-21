@@ -4,7 +4,7 @@ function otpHtml(username: string, otp: string) {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
       <h2 style="color: #4a90e2;">Hi ${username},</h2>
-      <p style="font-size: 16px;">Use the OTP below to continue with MCQ Battle:</p>
+      <p style="font-size: 16px;">Use the OTP below to continue with QuizForge:</p>
       <p style="font-size: 20px; font-weight: bold; color: #333; margin: 20px 0;">🔐 ${otp}</p>
       <p style="font-size: 14px; color: #555;">This OTP will expire in <b>10 minutes</b>. If you did not initiate this request, you can safely ignore this email.</p>
       <hr style="margin: 30px 0;">
@@ -15,7 +15,7 @@ async function sendViaSmtp(email: string, otp: string, username: string) {
   const login = process.env.BREVO_SMTP_LOGIN;
   const smtpKey = process.env.BREVO_SMTP_KEY || process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
-  const senderName = process.env.BREVO_SENDER_NAME || "MCQ Battle";
+  const senderName = process.env.BREVO_SENDER_NAME || "QuizForge";
 
   if (!login || !smtpKey || !senderEmail) {
     throw new Error("BREVO_SMTP_LOGIN, BREVO_SMTP_KEY/BREVO_API_KEY, and BREVO_SENDER_EMAIL must be set");
@@ -34,7 +34,7 @@ async function sendViaSmtp(email: string, otp: string, username: string) {
   await transporter.sendMail({
     from: `"${senderName}" <${senderEmail}>`,
     to: email,
-    subject: "Your MCQ Battle verification code",
+    subject: "Your QuizForge verification code",
     html: otpHtml(username, otp),
   });
 }
@@ -43,7 +43,7 @@ async function sendViaApi(email: string, otp: string, username: string) {
   // Prefer dedicated API key; xsmtpsib- SMTP keys do not work with the REST API.
   const apiKey = process.env.BREVO_API_KEY;
   const senderEmail = process.env.BREVO_SENDER_EMAIL;
-  const senderName = process.env.BREVO_SENDER_NAME || "MCQ Battle";
+  const senderName = process.env.BREVO_SENDER_NAME || "QuizForge";
 
   if (!apiKey || !senderEmail) {
     throw new Error("BREVO_API_KEY and BREVO_SENDER_EMAIL must be set");
@@ -66,7 +66,7 @@ async function sendViaApi(email: string, otp: string, username: string) {
     body: JSON.stringify({
       sender: { name: senderName, email: senderEmail },
       to: [{ email, name: username }],
-      subject: "Your MCQ Battle verification code",
+      subject: "Your QuizForge verification code",
       htmlContent: otpHtml(username, otp),
     }),
   });

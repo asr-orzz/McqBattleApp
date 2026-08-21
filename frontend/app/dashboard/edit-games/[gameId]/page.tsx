@@ -378,7 +378,7 @@ const removeQuestion = async (questionId: string) => {
                 <Edit className="h-6 w-6 text-blue-600 mr-2" />
                 Edit Game
               </h1>
-              <p className="text-slate-600 mt-1">Update your QuizBattle game questions and answers</p>
+              <p className="text-slate-600 mt-1">Update your QuizForge game questions and answers</p>
             </div>
           </div>
           <Button

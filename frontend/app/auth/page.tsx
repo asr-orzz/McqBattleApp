@@ -197,10 +197,10 @@ const handleSignUpSubmit = async (e: React.FormEvent) => {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center justify-center mb-4">
             <Gamepad2 className="h-8 w-8 text-blue-600" />
-            <span className="ml-2 text-2xl font-bold text-gray-900">QuizBattle</span>
+            <span className="ml-2 text-2xl font-bold text-gray-900">QuizForge</span>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome to QuizBattle</h1>
-          <p className="text-gray-500 mt-2">Join the ultimate MCQ battle experience</p>
+          <h1 className="text-2xl font-bold text-gray-900">Welcome to QuizForge</h1>
+          <p className="text-gray-500 mt-2">Join the ultimate QuizForge experience</p>
         </div>
 
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur">

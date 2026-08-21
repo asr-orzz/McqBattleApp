@@ -245,7 +245,7 @@ export default function MyGamesPage() {
               <Trophy className="h-6 w-6 text-blue-600 mr-2" />
               My Games
             </h1>
-            <p className="text-slate-600 mt-1">Manage and play your QuizBattle games</p>
+            <p className="text-slate-600 mt-1">Manage and play your QuizForge games</p>
           </div>
           <Button onClick={handleCreateGame} className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2">
             <Plus className="w-4 h-4 mr-2" />

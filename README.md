@@ -1,4 +1,4 @@
-# QuizBattle (McqBattleApp)
+# QuizForge
 
 Real-time multiplayer MCQ battles: create a room, invite players, generate questions with AI, and compete with live scoring.
 
@@ -25,7 +25,7 @@ Real-time multiplayer MCQ battles: create a room, invite players, generate quest
 ```
 McqBattleApp/
 ├── backend/     # Express API + Prisma
-└── frontend/    # Next.js app (QuizBattle UI)
+└── frontend/    # Next.js app (QuizForge UI)
 ```
 
 ---
@@ -82,7 +82,7 @@ FRONTEND_URL="http://localhost:3000"
 # Verify BREVO_SENDER_EMAIL as a sender in Brevo.
 BREVO_API_KEY=""
 BREVO_SENDER_EMAIL=""
-BREVO_SENDER_NAME="MCQ Battle"
+BREVO_SENDER_NAME="QuizForge"
 
 GROQ_API_KEY=""
 GROQ_MODEL="openai/gpt-oss-20b"

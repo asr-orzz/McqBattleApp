@@ -335,7 +335,7 @@ const handleSaveGame = async () => {
                 <HelpCircle className="h-6 w-6 text-blue-600 mr-2" />
                 Create New Game
               </h1>
-              <p className="text-slate-600 mt-1">Set up your QuizBattle game with questions and answers</p>
+              <p className="text-slate-600 mt-1">Set up your QuizForge game with questions and answers</p>
             </div>
           </div>
           <Button

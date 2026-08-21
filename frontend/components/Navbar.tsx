@@ -37,7 +37,7 @@ export default function Navbar() {
       <div className="flex h-16 w-full items-center px-4 lg:px-6 overflow-x-auto">
         <Link className="flex shrink-0 items-center mr-4" href="/">
           <Gamepad2 className="h-8 w-8 text-blue-600" />
-          <span className="ml-2 text-2xl font-bold text-slate-900">QuizBattle</span>
+          <span className="ml-2 text-2xl font-bold text-slate-900">QuizForge</span>
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">

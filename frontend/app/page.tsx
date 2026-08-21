@@ -29,7 +29,7 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 flex h-16 items-center border-b bg-white/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-white/60 lg:px-6">
         <Link className="flex items-center" href="/">
           <Gamepad2 className="h-8 w-8 text-blue-600" />
-          <span className="ml-2 text-2xl font-bold text-gray-900">QuizBattle</span>
+          <span className="ml-2 text-2xl font-bold text-gray-900">QuizForge</span>
         </Link>
         <nav className="ml-auto hidden items-center gap-6 sm:flex">
           <Link className="text-sm font-medium text-gray-600 transition-colors hover:text-blue-600" href="#features">
@@ -66,7 +66,7 @@ export default function HomePage() {
                     <span className="block text-blue-600">Generate questions in seconds.</span>
                   </h1>
                   <p className="max-w-[580px] text-lg text-gray-500 md:text-xl">
-                    QuizBattle lets you create timed quiz rooms, invite players, and compete in real time. Type a topic
+                    QuizForge lets you create timed quiz rooms, invite players, and compete in real time. Type a topic
                     and let AI write the questions, options, answers, and explanations for you.
                   </p>
                 </div>
@@ -151,7 +151,7 @@ export default function HomePage() {
                 icon={Sparkles}
                 iconClass="bg-purple-100 text-purple-600"
                 title="AI question generation"
-                description="Enter a topic and question count. QuizBattle drafts MCQs with four options, a correct answer, and an explanation you can edit before publishing."
+                description="Enter a topic and question count. QuizForge drafts MCQs with four options, a correct answer, and an explanation you can edit before publishing."
               />
               <FeatureCard
                 icon={Gamepad2}
@@ -278,7 +278,7 @@ export default function HomePage() {
       </main>
 
       <footer className="flex w-full shrink-0 flex-col items-center gap-2 border-t px-4 py-6 sm:flex-row md:px-6">
-        <p className="text-xs text-gray-500">© {new Date().getFullYear()} QuizBattle. All rights reserved.</p>
+        <p className="text-xs text-gray-500">© {new Date().getFullYear()} QuizForge. All rights reserved.</p>
         <nav className="flex gap-4 sm:ml-auto sm:gap-6">
           <Link className="text-xs text-gray-500 hover:text-blue-600" href="#features">
             Features
