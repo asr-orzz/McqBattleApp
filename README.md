@@ -2,8 +2,8 @@
 
 Real-time multiplayer MCQ battles: create a room, invite players, generate questions with AI, and compete with live scoring.
 
-**Live app:** [mcq-battle-app.vercel.app](https://mcq-battle-app.vercel.app/)  
-**API:** [mcqbattleapp.onrender.com](https://mcqbattleapp.onrender.com/health)
+**Live app:** [quiz-forge-one-roan.vercel.app](https://quiz-forge-one-roan.vercel.app/)  
+**API:** [quizforge-9kfc.onrender.com](https://quizforge-9kfc.onrender.com/health)
 
 ---
 
@@ -146,7 +146,7 @@ OTP signup fails if Brevo is misconfigured. Checklist:
 
 Set environment variables:
 
-- `NEXT_PUBLIC_API_BASE_URL` → `https://<your-render-service>.onrender.com/api/v1`
+- `NEXT_PUBLIC_API_BASE_URL` → `https://quizforge-9kfc.onrender.com/api/v1`
 - `NEXT_PUBLIC_PUSHER_KEY`
 - `NEXT_PUBLIC_PUSHER_CLUSTER`
 
@@ -157,7 +157,7 @@ Set at least:
 - `DATABASE_URL`
 - `USER_JWT_SECRET_KEY`
 - `OTP_SECRET`
-- `FRONTEND_URL` → your Vercel URL, e.g. `https://mcq-battle-app.vercel.app` (no trailing slash)
+- `FRONTEND_URL` → `https://quiz-forge-one-roan.vercel.app` (no trailing slash)
 - `PUSHER_APP_ID`, `PUSHER_KEY`, `PUSHER_SECRET`, `PUSHER_CLUSTER`
 - `BREVO_API_KEY` (`xkeysib-...`), `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`
 - `GROQ_API_KEY`, `GROQ_MODEL`
